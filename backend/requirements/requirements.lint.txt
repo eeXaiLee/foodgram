@@ -4,13 +4,75 @@
 #
 #    pip-compile --output-file=requirements.lint.txt requirements.lint.in
 #
+asgiref==3.10.0
+    # via
+    #   -c requirements.txt
+    #   django
+certifi==2025.10.5
+    # via
+    #   -c requirements.txt
+    #   requests
+charset-normalizer==3.4.4
+    # via
+    #   -c requirements.txt
+    #   requests
+django==5.1.1
+    # via
+    #   -c requirements.txt
+    #   django-stubs
+    #   django-stubs-ext
+django-stubs==5.2.2
+    # via
+    #   -r requirements.lint.in
+    #   djangorestframework-stubs
+django-stubs-ext==5.2.7
+    # via django-stubs
+djangorestframework-stubs==3.15.1
+    # via -r requirements.lint.in
 flake8==7.1.1
     # via -r requirements.lint.in
-isort==5.13.2
+idna==3.11
+    # via
+    #   -c requirements.txt
+    #   requests
+isort==6.0.1
     # via -r requirements.lint.in
 mccabe==0.7.0
     # via flake8
+mypy==1.10.1
+    # via -r requirements.lint.in
+mypy-extensions==1.1.0
+    # via mypy
 pycodestyle==2.12.1
     # via flake8
 pyflakes==3.2.0
     # via flake8
+requests==2.32.5
+    # via
+    #   -c requirements.txt
+    #   djangorestframework-stubs
+sqlparse==0.5.3
+    # via
+    #   -c requirements.txt
+    #   django
+types-pyyaml==6.0.12.20250915
+    # via
+    #   django-stubs
+    #   djangorestframework-stubs
+types-requests==2.32.4.20250913
+    # via djangorestframework-stubs
+typing-extensions==4.15.0
+    # via
+    #   django-stubs
+    #   django-stubs-ext
+    #   djangorestframework-stubs
+    #   mypy
+tzdata==2025.2
+    # via
+    #   -c requirements.txt
+    #   django
+urllib3==2.5.0
+    # via
+    #   -c requirements.txt
+    #   requests
+    #   types-requests
