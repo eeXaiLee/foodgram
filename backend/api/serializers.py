@@ -4,6 +4,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from django.core.files.base import ContentFile
+import base64
+import uuid
 
 User = get_user_model()
 
@@ -102,3 +105,35 @@ class SetPasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save(update_fields=['password'])
         return user
+
+
+class SetAvatarSerializer(serializers.Serializer):
+    avatar = serializers.CharField(write_only=True)
+
+    def _decode_base64(self, data: str) -> ContentFile:
+        """Превращает base64-строку в ContentFile с расширением."""
+        if data.startswith('data:') and ';base64,' in data:
+            data_uri_header, base64_string = data.split(';base64,', 1)
+            file_extension = (
+                data_uri_header.split('/')[-1]
+                if '/' in data_uri_header
+                else 'png'
+            )
+        else:
+            base64_string = data
+            file_extension = 'png'
+
+        image_bytes = base64.b64decode(base64_string)
+        unique_name = f'{uuid.uuid4()}.{file_extension}'
+        content_file = ContentFile(image_bytes, name=unique_name)
+        return content_file
+
+    def save(self, *args, **kwargs) -> AbstractUser:
+        user = self.context['request'].user
+        content_file = self._decode_base64(self.validated_data['avatar'])
+        user.avatar.save(content_file.name, content_file, save=True)
+        return user
+
+
+class AvatarResponseSerializer(serializers.Serializer):
+    avatar = serializers.CharField()
