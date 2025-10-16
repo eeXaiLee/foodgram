@@ -1,14 +1,17 @@
+from typing import Type
+
 from django.contrib.auth import get_user_model
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from typing import Type
 
 from .serializers import (
-    UserSerializer,
-    UserCreateSerializer,
-    UserCreateResponseSerializer,
+    AvatarResponseSerializer,
+    SetAvatarSerializer,
     SetPasswordSerializer,
+    UserCreateResponseSerializer,
+    UserCreateSerializer,
+    UserSerializer,
 )
 
 User = get_user_model()
@@ -69,3 +72,30 @@ class UserViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=['put', 'delete'],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='me/avatar',
+    )
+    def me_avatar(self, request, *args, **kwargs) -> Response:
+        current_user = request.user
+
+        if request.method == 'DELETE':
+            if getattr(current_user, 'avatar', None):
+                current_user.avatar.delete(save=False)
+                current_user.avatar = None
+                current_user.save(update_fields=['avatar'])
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = SetAvatarSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        updated_user = serializer.save()
+
+        url = updated_user.avatar.url
+        uri = request.build_absolute_uri(url)
+        response_serializer = AvatarResponseSerializer({'avatar': uri})
+        return Response(response_serializer.data, status=status.HTTP_200_OK)

@@ -1,12 +1,12 @@
+import base64
+import uuid
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
 from django.core.files.base import ContentFile
-import base64
-import uuid
+from rest_framework import serializers
 
 User = get_user_model()
 
