@@ -8,7 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from recipes.models import Tag
+from recipes.models import Ingredient, Tag
 
 User = get_user_model()
 
@@ -147,3 +147,11 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'name', 'slug',)
         read_only_fields = ('id', 'name', 'slug',)
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')
+        read_only_fields = ('id', 'name', 'measurement_unit')
