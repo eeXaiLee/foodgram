@@ -4,16 +4,17 @@ from django.contrib.auth import get_user_model
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from recipes.models import Tag
 
 from .serializers import (
     AvatarResponseSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
+    TagSerializer,
     UserCreateResponseSerializer,
     UserCreateSerializer,
     UserSerializer,
-    TagSerializer,
 )
 
 User = get_user_model()
