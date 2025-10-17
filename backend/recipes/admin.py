@@ -1,3 +1,19 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Ingredient, Tag
+
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'name', 'slug')
+    search_fields = ('name', 'slug')
+    ordering = ('id',)
+
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'name', 'measurement_unit')
+    search_fields = ('name',)
+    ordering = ('id',)

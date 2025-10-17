@@ -5,10 +5,14 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from recipes.models import Ingredient, Tag
+
 from .serializers import (
     AvatarResponseSerializer,
+    IngredientSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
+    TagSerializer,
     UserCreateResponseSerializer,
     UserCreateSerializer,
     UserSerializer,
@@ -99,3 +103,25 @@ class UserViewSet(
         uri = request.build_absolute_uri(url)
         response_serializer = AvatarResponseSerializer({'avatar': uri})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all().order_by('id')
+    serializer_class = TagSerializer
+    permission_classes = (permissions.AllowAny)
+    pagination_class = None
+
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+
+    serializer_class = IngredientSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = Ingredient.objects.all().order_by('id')
+        name_prefix = self.request.query_params.get('name')
+
+        if name_prefix:
+            queryset = queryset.filter(name__istartswith=name_prefix)
+
+        return queryset
