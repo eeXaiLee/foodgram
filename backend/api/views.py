@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from recipes.models import Tag
 
 from .serializers import (
     AvatarResponseSerializer,
@@ -12,6 +13,7 @@ from .serializers import (
     UserCreateResponseSerializer,
     UserCreateSerializer,
     UserSerializer,
+    TagSerializer,
 )
 
 User = get_user_model()
@@ -99,3 +101,10 @@ class UserViewSet(
         uri = request.build_absolute_uri(url)
         response_serializer = AvatarResponseSerializer({'avatar': uri})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all().order_by('id')
+    serializer_class = TagSerializer
+    permission_classes = (permissions.AllowAny)
+    pagination_class = None
