@@ -35,7 +35,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 @admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.modelAdmin):
+class RecipeIngredientAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'recipe', 'ingredient', 'amount')
     list_filter = ('recipe', 'ingredient',)
