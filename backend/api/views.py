@@ -5,11 +5,14 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     AvatarResponseSerializer,
     IngredientSerializer,
+    RecipeReadSerializer,
+    RecipeWriteSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
     TagSerializer,
@@ -106,6 +109,7 @@ class UserViewSet(
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+
     queryset = Tag.objects.all().order_by('id')
     serializer_class = TagSerializer
     permission_classes = (permissions.AllowAny)
@@ -125,3 +129,19 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(name__istartswith=name_prefix)
 
         return queryset
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+
+    queryset = (
+        Recipe.objects.select_related('author')
+        .prefetch_related('tags', 'recipe_ingredients__ingredient')
+        .all()
+        .order_by('-pub_date', 'id')
+    )
+    permission_classes = (IsAuthorOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeReadSerializer
+        return RecipeWriteSerializer
