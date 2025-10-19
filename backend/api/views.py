@@ -5,7 +5,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
@@ -145,3 +145,38 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
         return RecipeWriteSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        params = self.request.query_params
+        request_user = (
+            self.request.user if self.request.user.is_authenticated else None
+        )
+
+        author_id = params.get('author')
+        if author_id:
+            queryset = queryset.filter(author__id=author_id)
+
+        tag_slugs = params.getlist('tags')
+        if tag_slugs:
+            queryset = queryset.filter(tags__slug__in=tag_slugs).distinct()
+
+        if params.get('is_favorited') == '1':
+            if request_user:
+                favorite_ids = Favorite.objects.filter(
+                    user=request_user
+                ).values_list('recipe_id', flat=True)
+                queryset = queryset.filter(id__in=favorite_ids)
+            else:
+                queryset = queryset.none()
+
+        if params.get('is_in_shopping_cart') == '1':
+            if request_user:
+                cart_ids = ShoppingCart.objects.filter(
+                    user=request_user
+                ).values_list('recipe_id', flat=True)
+                queryset = queryset.filter(id__in=cart_ids)
+            else:
+                queryset = queryset.none()
+
+        return queryset
