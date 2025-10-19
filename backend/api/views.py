@@ -1,13 +1,22 @@
 from typing import Any, Type
 
 from django.contrib.auth import get_user_model
+from django.db.models import F, Sum
+from django.http import HttpResponse
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag,
+)
 
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
@@ -240,3 +249,44 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart_delete(self, request: Request, pk: str = '') -> Response:
         recipe = self.get_object()
         return self._remove_link(ShoppingCart, request.user, recipe)
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request: Request) -> HttpResponse:
+        """Выгрузка списка покупок
+
+        Суммирует ингредиенты из корзины текущего пользователя и отдаёт
+        .txt файл.
+        Формат строки: "Название (ед.) - количество".
+        """
+        queryset = (
+            RecipeIngredient.objects.filter(
+                recipe__in_carts__user=request.user
+            ).values(
+                name=F('ingredient__name'),
+                unit=F('ingredient__measurement_unit'),
+            ).annotate(total=Sum('amount'))
+            .order_by('name', 'unit')
+        )
+
+        lines = []
+        for row in queryset:
+            lines.append(f'{row['name']} ({row['unit']}) — {row['total']}.')
+
+        if not lines:
+            lines = ['Ваш список покупок пуст.']
+
+        content = '\n'.join(lines)
+
+        response = HttpResponse(
+            content,
+            content_type='text/plain; charset=utf-8'
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="Shopping_list.txt"'
+        )
+        return response
