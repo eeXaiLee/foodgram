@@ -9,7 +9,14 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag,
+)
 
 User = get_user_model()
 
@@ -39,6 +46,12 @@ def _absolute_url(request, url: str) -> str:
     Строит абсолютный URL, если есть request; иначе возвращает url.
     """
     return str(request.build_absolute_uri(url)) if request else str(url)
+
+
+def _current_user(context: dict) -> AbstractUser:
+    """Возвращает текущего аутентифицированного пользователя."""
+    request = context.get('request')
+    return getattr(request, 'user', None)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -199,6 +212,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     image = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -212,6 +227,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'tags',
             'ingredients',
             'pub_date',
+            'is_favorited',
+            'is_in_shopping_cart',
         )
         read_only_fields = (
             'id',
@@ -223,6 +240,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'tags',
             'ingredients',
             'pub_date',
+            'is_favorited',
+            'is_in_shopping_cart',
         )
 
     def get_image(self, obj: Recipe) -> str | None:
@@ -230,6 +249,18 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             return None
         request = self.context.get('request')
         return _absolute_url(request, obj.image.url)
+
+    def get_is_favorited(self, obj: Recipe) -> bool:
+        user = self._current_user(self.context)
+        if not user or not user.is_authenticated:
+            return False
+        return Favorite.objects.filter(user=user, recipe=obj).exists()
+
+    def get_is_in_shopping_cart(self, obj: Recipe) -> bool:
+        user = self._current_user(self.context)
+        if not user or not user.is_authenticated:
+            return False
+        return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
