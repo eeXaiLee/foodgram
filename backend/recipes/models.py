@@ -87,8 +87,8 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Рецепт',
-        verbose_name_plural = 'Рецепты',
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
         ordering = ('-pub_date', 'id',)
         constraints = [
             models.UniqueConstraint(
