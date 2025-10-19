@@ -368,3 +368,19 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Recipe) -> dict[str, Any]:
         return RecipeReadSerializer(instance, context=self.context).data
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+    def get_image(self, obj: Recipe) -> str | None:
+        if not obj.image:
+            return None
+        request = self.context.get('request')
+        return _absolute_url(request, obj.image.url)
