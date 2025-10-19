@@ -1,17 +1,29 @@
-from typing import Type
+from typing import Any, Type
 
 from django.contrib.auth import get_user_model
+from django.db.models import F, Sum
+from django.http import HttpResponse
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag,
+)
 
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     AvatarResponseSerializer,
     IngredientSerializer,
     RecipeReadSerializer,
+    RecipeShortSerializer,
     RecipeWriteSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
@@ -144,4 +156,137 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
+        if self.action in ('favorite', 'shopping_cart'):
+            return RecipeShortSerializer
         return RecipeWriteSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        params = self.request.query_params
+        request_user = (
+            self.request.user if self.request.user.is_authenticated else None
+        )
+
+        author_id = params.get('author')
+        if author_id:
+            queryset = queryset.filter(author__id=author_id)
+
+        tag_slugs = params.getlist('tags')
+        if tag_slugs:
+            queryset = queryset.filter(tags__slug__in=tag_slugs).distinct()
+
+        if params.get('is_favorited') == '1':
+            if request_user:
+                favorite_ids = Favorite.objects.filter(
+                    user=request_user
+                ).values_list('recipe_id', flat=True)
+                queryset = queryset.filter(id__in=favorite_ids)
+            else:
+                queryset = queryset.none()
+
+        if params.get('is_in_shopping_cart') == '1':
+            if request_user:
+                cart_ids = ShoppingCart.objects.filter(
+                    user=request_user
+                ).values_list('recipe_id', flat=True)
+                queryset = queryset.filter(id__in=cart_ids)
+            else:
+                queryset = queryset.none()
+
+        return queryset
+
+    def _add_link(
+            self, model: Any, user: Any, recipe: Recipe, request: Request
+    ) -> tuple[bool, Response | None]:
+        """Создаёт связь user-recipe в указанной модели."""
+        _, created = model.objects.get_or_create(user=user, recipe=recipe)
+        if not created:
+            return False, Response(
+                {'errors': 'Уже добавлено.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        data = RecipeShortSerializer(
+            recipe, context={'request': request}
+        ).data
+        return True, Response(data, status=status.HTTP_201_CREATED)
+
+    def _remove_link(self, model: Any, user: Any, recipe: Recipe) -> Response:
+        """Удаляет связь user-recipe в указанной модели."""
+        deleted, _ = model.objects.filter(user=user, recipe=recipe).delete()
+        if deleted == 0:
+            return Response(
+                {'errors': 'Нечего удалять.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=('post',),
+        permission_classes=(IsAuthenticated),
+        url_path='favorite',
+    )
+    def favorite(self, request: Request, pk: str = '') -> Response:
+        recipe = self.get_object()
+        return self._add_link(Favorite, request.user, recipe, request)
+
+    @favorite.mapping.delete
+    def favorite_delete(self, request: Request, pk: str = '') -> Response:
+        recipe = self.get_object()
+        return self._remove_link(Favorite, request.user, recipe)
+
+    @action(
+        detail=True,
+        methods=('post',),
+        permission_classes=(IsAuthenticated),
+        url_path='shopping_cart',
+    )
+    def shopping_cart(self, request: Request, pk: str = '') -> Response:
+        recipe = self.get_object()
+        return self._add_link(ShoppingCart, request.user, recipe, request)
+
+    @shopping_cart.mapping.delete
+    def shopping_cart_delete(self, request: Request, pk: str = '') -> Response:
+        recipe = self.get_object()
+        return self._remove_link(ShoppingCart, request.user, recipe)
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request: Request) -> HttpResponse:
+        """Выгрузка списка покупок
+
+        Суммирует ингредиенты из корзины текущего пользователя и отдаёт
+        .txt файл.
+        Формат строки: "Название (ед.) - количество".
+        """
+        queryset = (
+            RecipeIngredient.objects.filter(
+                recipe__in_carts__user=request.user
+            ).values(
+                name=F('ingredient__name'),
+                unit=F('ingredient__measurement_unit'),
+            ).annotate(total=Sum('amount'))
+            .order_by('name', 'unit')
+        )
+
+        lines = []
+        for row in queryset:
+            lines.append(f'{row['name']} ({row['unit']}) — {row['total']}.')
+
+        if not lines:
+            lines = ['Ваш список покупок пуст.']
+
+        content = '\n'.join(lines)
+
+        response = HttpResponse(
+            content,
+            content_type='text/plain; charset=utf-8'
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="Shopping_list.txt"'
+        )
+        return response
