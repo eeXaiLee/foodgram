@@ -187,7 +187,6 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all().order_by('id')
     serializer_class = TagSerializer
-    permission_classes = (permissions.AllowAny)
     pagination_class = None
 
 
