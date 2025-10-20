@@ -17,6 +17,7 @@ from recipes.models import (
     ShoppingCart,
     Tag,
 )
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -56,7 +57,7 @@ def _current_user(context: dict) -> AbstractUser:
 
 class UserSerializer(serializers.ModelSerializer):
 
-    is_subscribed = serializers.BooleanField(read_only=True, default=False)
+    is_subscribed = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
 
     class Meta:
@@ -78,6 +79,13 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         url = obj.avatar.url
         return _absolute_url(request, url)
+
+    def get_is_subscribed(self, obj: Any) -> bool:
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        return Subscription.objects.filter(user=user, author=obj).exists()
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -384,3 +392,41 @@ class RecipeShortSerializer(serializers.ModelSerializer):
             return None
         request = self.context.get('request')
         return _absolute_url(request, obj.image.url)
+
+
+class SubscriptionUserSerializer(UserSerializer):
+
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        read_only_fields = UserSerializer.Meta.read_only_fields + (
+            'recipes', 'recipes_count'
+        )
+
+    def get_is_subscribed(self, obj: Any) -> bool:
+        return True
+
+    def get_recipes(self, obj: Any) -> list[dict]:
+        request = self.context.get('request')
+        raw_limit = (
+            request.query_params.get('recipes_limit') if request else None
+        )
+        try:
+            limit = int(raw_limit) if raw_limit else None
+        except (TypeError, ValueError):
+            limit = None
+
+        queryset = (
+            Recipe.objects.filter(author=obj).order_by('-pub_date', 'id')
+        )
+        if limit:
+            queryset = queryset[:limit]
+
+        return RecipeShortSerializer(
+            queryset, many=True, context=self.context
+        ).data
+
+    def get_recipes_count(self, obj: Any) -> int:
+        return Recipe.objects.filter(author=obj).count()
