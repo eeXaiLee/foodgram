@@ -27,6 +27,7 @@ from .serializers import (
     RecipeWriteSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
+    SubscriptionUserSerializer,
     TagSerializer,
     UserCreateResponseSerializer,
     UserCreateSerializer,
@@ -53,6 +54,8 @@ class UserViewSet(
             return UserCreateSerializer
         if self.action == 'set_password':
             return SetPasswordSerializer
+        if self.action in ('subscribe', 'subscriptions'):
+            return SubscriptionUserSerializer
         return UserSerializer
 
     def create(self, request, *args, **kwargs) -> Response:
