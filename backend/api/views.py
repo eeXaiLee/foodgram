@@ -17,6 +17,7 @@ from recipes.models import (
     ShoppingCart,
     Tag,
 )
+from users.models import Subscription
 
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
@@ -121,6 +122,65 @@ class UserViewSet(
         uri = request.build_absolute_uri(url)
         response_serializer = AvatarResponseSerializer({'avatar': uri})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=('post',),
+        permission_classes=(IsAuthenticated,),
+        url_path='subscribe',
+    )
+    def subscribe(self, request: Request, pk: str = '') -> Response:
+        author = self.get_object()
+        if author == request.user:
+            return Response(
+                {'errors': 'Нельзя подписаться на себя.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _, created = Subscription.objects.get_or_create(
+            user=request.user,
+            author=author,
+        )
+        if not created:
+            return Response(
+                {'errors': 'Уже подписаны.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        data = SubscriptionUserSerializer(
+            author, context={'request': request}
+        ).data
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def unsubscribe(self, request: Request, pk: str = '') -> Response:
+        author = self.get_object()
+        deleted, _ = Subscription.objects.filter(
+            user=request.user,
+            author=author,
+        ).delete()
+        if deleted == 0:
+            return Response(
+                {'errors': 'Вы не подписаны.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+        url_path='subscriptions',
+    )
+    def subscriptions(self, request: Request) -> Response:
+        authors = (
+            self.get_queryset()
+            .filter(subscribers__user=request.user)
+            .order_by('id')
+        )
+        page = self.paginate_queryset(authors)
+        serializer = SubscriptionUserSerializer(
+            page, many=True, context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
