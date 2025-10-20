@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+from .models import Subscription
+
 User = get_user_model()
 
 
@@ -45,3 +47,11 @@ class UserAdmin(BaseUserAdmin):
             )
         }),
     )
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'author')
+    list_filter = ('user', 'author')
+    search_fields = ('user__email', 'author__email')
+    ordering = ('id',)
