@@ -2,10 +2,10 @@ from typing import Any, Type
 
 from django.contrib.auth import get_user_model
 from django.db.models import F, Sum
-from django.http import HttpResponse
-from rest_framework import mixins, permissions, status, viewsets
+from django.http import HttpRequest, HttpResponse
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -46,7 +46,7 @@ class UserViewSet(
 ):
 
     queryset = User.objects.all().order_by('id')
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (AllowAny,)
 
     def get_serializer_class(self) -> (
             Type[UserCreateSerializer | SetPasswordSerializer | UserSerializer]
@@ -77,7 +77,7 @@ class UserViewSet(
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[permissions.IsAuthenticated],
+        permission_classes=(IsAuthenticated,),
         url_path='me'
     )
     def me(self, request, *args, **kwargs) -> Response:
@@ -87,7 +87,7 @@ class UserViewSet(
     @action(
         detail=False,
         methods=['post'],
-        permission_classes=[permissions.IsAuthenticated],
+        permission_classes=(IsAuthenticated,),
         url_path='set_password'
     )
     def set_password(self, request, *args, **kwargs) -> Response:
@@ -99,7 +99,7 @@ class UserViewSet(
     @action(
         detail=False,
         methods=['put', 'delete'],
-        permission_classes=[permissions.IsAuthenticated],
+        permission_classes=(IsAuthenticated,),
         url_path='me/avatar',
     )
     def me_avatar(self, request, *args, **kwargs) -> Response:
@@ -285,7 +285,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=('post',),
-        permission_classes=(IsAuthenticated),
+        permission_classes=(IsAuthenticated,),
         url_path='favorite',
     )
     def favorite(self, request: Request, pk: str = '') -> Response:
@@ -300,7 +300,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=('post',),
-        permission_classes=(IsAuthenticated),
+        permission_classes=(IsAuthenticated,),
         url_path='shopping_cart',
     )
     def shopping_cart(self, request: Request, pk: str = '') -> Response:
@@ -337,7 +337,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         lines = []
         for row in queryset:
-            lines.append(f'{row['name']} ({row['unit']}) — {row['total']}.')
+            lines.append(f'{row["name"]} ({row["unit"]}) — {row["total"]}.')
 
         if not lines:
             lines = ['Ваш список покупок пуст.']
@@ -352,3 +352,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="Shopping_list.txt"'
         )
         return response
+
+    @staticmethod
+    def _frontend_recipe_url(request: HttpRequest, recipe_id: int) -> str:
+        base = request.build_absolute_uri('/')[:-1]
+        return f'{base}/recipes/{recipe_id}/'
+
+    @action(
+        detail=True,
+        methods=('get',),
+        permission_classes=(AllowAny,),
+        url_path='get-link',
+    )
+    def get_link(self, request: Request, pk: str = '') -> Response:
+        recipe = self.get_object()
+        short_url = self._frontend_recipe_url(request, recipe.id)
+        return Response({'short-link': short_url}, status=status.HTTP_200_OK)
