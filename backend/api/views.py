@@ -187,12 +187,14 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all().order_by('id')
     serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = IngredientSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
