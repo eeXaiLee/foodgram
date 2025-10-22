@@ -34,11 +34,20 @@ class RecipeIngredientInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'name', 'author', 'cooking_time', 'pub_date',)
+    list_display = (
+        'id', 'name', 'author', 'cooking_time', 'pub_date', 'favorites_count',
+    )
     list_filter = ('author', 'tags',)
     search_fields = ('name', 'author__email', 'author__username',)
     inlines = (RecipeIngredientInline,)
+    list_select_related = ('author',)
+    readonly_fields = ('favorites_count',)
     ordering = ('-pub_date', 'id',)
+
+    def favorites_count(self, obj):
+        return Favorite.objects.filter(recipe=obj).count()
+
+    favorites_count.short_description = 'В избранном'
 
 
 @admin.register(RecipeIngredient)
@@ -47,6 +56,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'ingredient', 'amount')
     list_filter = ('recipe', 'ingredient',)
     search_fields = ('recipe__name', 'ingredient__name',)
+    raw_id_fields = ('recipe', 'ingredient',)
     ordering = ('recipe_id', 'id',)
 
 
@@ -56,6 +66,8 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user__email', 'user__username', 'recipe__name',)
+    list_select_related = ('user', 'recipe',)
+    raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
 
 
@@ -65,4 +77,6 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user__email', 'user__username', 'recipe__name',)
+    list_select_related = ('user', 'recipe',)
+    raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
