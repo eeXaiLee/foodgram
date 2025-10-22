@@ -15,6 +15,7 @@ class UserAdmin(BaseUserAdmin):
     )
     list_display_links = ('id', 'email')
     search_fields = ('email', 'username', 'first_name', 'last_name')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups')
     ordering = ('id',)
 
     fieldsets = (
@@ -54,4 +55,6 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'author')
     list_filter = ('user', 'author')
     search_fields = ('user__email', 'author__email')
+    list_select_related = ('user', 'author',)
+    raw_id_fields = ('user', 'author',)
     ordering = ('id',)
