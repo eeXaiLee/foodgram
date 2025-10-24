@@ -22,7 +22,7 @@ from users.models import Subscription
 User = get_user_model()
 
 
-def _decode_base64(self, data: str) -> ContentFile:
+def _decode_base64(data: str) -> ContentFile:
     """Превращает base64-строку в ContentFile с расширением."""
     if data.startswith('data:') and ';base64,' in data:
         data_uri_header, base64_string = data.split(';base64,', 1)
@@ -259,13 +259,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return _absolute_url(request, obj.image.url)
 
     def get_is_favorited(self, obj: Recipe) -> bool:
-        user = self._current_user(self.context)
+        user = _current_user(self.context)
         if not user or not user.is_authenticated:
             return False
         return Favorite.objects.filter(user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj: Recipe) -> bool:
-        user = self._current_user(self.context)
+        user = _current_user(self.context)
         if not user or not user.is_authenticated:
             return False
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
