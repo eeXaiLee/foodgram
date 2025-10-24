@@ -2,16 +2,26 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from core.constants import (
+    INGREDIENT_MEASUREMENT_UNIT_MAX_LEN,
+    INGREDIENT_NAME_MAX_LEN,
+    MIN_COOKING_TIME,
+    MIN_INGREDIENT_AMOUNT,
+    RECIPE_NAME_MAX_LEN,
+    TAG_NAME_MAX_LEN,
+    TAG_SLUG_MAX_LEN,
+)
+
 
 class Tag(models.Model):
 
     name = models.CharField(
-        max_length=32,
+        max_length=TAG_NAME_MAX_LEN,
         unique=True,
         verbose_name='Тег',
     )
     slug = models.SlugField(
-        max_length=32,
+        max_length=TAG_SLUG_MAX_LEN,
         unique=True,
         verbose_name='Слаг',
     )
@@ -27,11 +37,11 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=128,
+        max_length=INGREDIENT_NAME_MAX_LEN,
         verbose_name='Ингредиент',
     )
     measurement_unit = models.CharField(
-        max_length=32,
+        max_length=INGREDIENT_MEASUREMENT_UNIT_MAX_LEN,
         verbose_name='Единица измерения',
     )
 
@@ -52,7 +62,7 @@ class Recipe(models.Model):
         verbose_name='Автор',
     )
     name = models.CharField(
-        max_length=50,
+        max_length=RECIPE_NAME_MAX_LEN,
         verbose_name='Название рецепта',
     )
     text = models.TextField(
@@ -65,7 +75,7 @@ class Recipe(models.Model):
         verbose_name='Изображение блюда',
     )
     cooking_time = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
+        validators=[MinValueValidator(MIN_COOKING_TIME)],
         verbose_name='Время готовки (мин)',
         help_text='Минимум 1 минута',
     )
@@ -116,7 +126,7 @@ class RecipeIngredient(models.Model):
         verbose_name='Связанный ингредиент',
     )
     amount = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
+        validators=[MinValueValidator(MIN_INGREDIENT_AMOUNT)],
         verbose_name='Количество',
         help_text='Минимум 1 (единица измерения)',
     )
