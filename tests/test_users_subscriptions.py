@@ -1,8 +1,8 @@
 from rest_framework import status
 
 
-def test_me_requires_auth(auth_client):
-    response = auth_client.get('/api/users/me/')
+def test_me_requires_auth(api_client):
+    response = api_client.get('/api/users/me/')
     assert response.status_code in (
         status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN
     )

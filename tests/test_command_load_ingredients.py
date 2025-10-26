@@ -13,10 +13,10 @@ def test_load_ingredients(settings, tmp_path, capsys):
 
     csv_path = data_dir / 'ingredients.csv'
     with csv_path.open('w', encoding='utf-8', newline='') as file:
-        writter = csv.writter(file)
-        writter.writerow(['name', 'measuerement_unit'])
-        writter.writerow(['Сахар', 'г'])
-        writter.writerow(['Соль', 'г'])
+        writer = csv.writer(file)
+        writer.writerow(['name', 'measurement_unit'])
+        writer.writerow(['Сахар', 'г'])
+        writer.writerow(['Соль', 'г'])
 
     settings.DATA_DIR = data_dir
 

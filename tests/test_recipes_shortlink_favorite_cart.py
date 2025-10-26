@@ -10,10 +10,10 @@ def test_get_short_link_public(api_client, make_recipe):
     assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
-    assert 'short_link' in data
+    assert 'short-link' in data
 
-    assert re.match(r'^https?://', data['short_link'])
-    assert data['short_link'].endswith(f'/recipes/{recipe.id}/')
+    assert re.match(r'^https?://', data['short-link'])
+    assert data['short-link'].endswith(f'/recipes/{recipe.id}/')
 
 
 def test_favorite_add_delete(auth_client, make_recipe):
@@ -40,7 +40,7 @@ def test_shopping_cart_add_delete_download(auth_client, make_recipe):
     assert download.status_code == status.HTTP_200_OK
     content_type = download.headers.get('Content-Type', '')
     assert 'text/plain' in content_type
-    assert 'Яйцо (шт) - 3.' in download.content.decode('utf-8')
+    assert 'Яйцо (шт) — 2.' in download.content.decode('utf-8')
 
     delete = auth_client.delete(url)
     assert delete.status_code == status.HTTP_204_NO_CONTENT

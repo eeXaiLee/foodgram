@@ -7,6 +7,11 @@ from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 User = get_user_model()
 
 
+@pytest.fixture(autouse=True)
+def _enable_db(db):
+    pass
+
+
 @pytest.fixture
 def api_client():
     return APIClient()
@@ -48,7 +53,7 @@ def tag(db):
 
 @pytest.fixture
 def ingredient(db):
-    return Ingredient.objects.create(name='Яйцо', measurement_unit='шт.')
+    return Ingredient.objects.create(name='Яйцо', measurement_unit='шт')
 
 
 @pytest.fixture
