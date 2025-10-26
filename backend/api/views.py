@@ -261,18 +261,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def _add_link(
             self, model: Any, user: Any, recipe: Recipe, request: Request
-    ) -> tuple[bool, Response | None]:
+    ) -> Response:
         """Создаёт связь user-recipe в указанной модели."""
         _, created = model.objects.get_or_create(user=user, recipe=recipe)
         if not created:
-            return False, Response(
+            return Response(
                 {'errors': 'Уже добавлено.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         data = RecipeShortSerializer(
             recipe, context={'request': request}
         ).data
-        return True, Response(data, status=status.HTTP_201_CREATED)
+        return Response(data, status=status.HTTP_201_CREATED)
 
     def _remove_link(self, model: Any, user: Any, recipe: Recipe) -> Response:
         """Удаляет связь user-recipe в указанной модели."""
