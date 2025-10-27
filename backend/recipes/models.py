@@ -8,9 +8,11 @@ from core.constants import (
     MIN_COOKING_TIME,
     MIN_INGREDIENT_AMOUNT,
     RECIPE_NAME_MAX_LEN,
+    TAG_COLOR_MAX_LEN,
     TAG_NAME_MAX_LEN,
     TAG_SLUG_MAX_LEN,
 )
+from core.validators import hex_color_validator
 
 
 class Tag(models.Model):
@@ -24,6 +26,12 @@ class Tag(models.Model):
         max_length=TAG_SLUG_MAX_LEN,
         unique=True,
         verbose_name='Слаг',
+    )
+    color = models.CharField(
+        max_length=TAG_COLOR_MAX_LEN,
+        unique=True,
+        validators=[hex_color_validator],
+        verbose_name='Цвет в HEX',
     )
 
     class Meta:

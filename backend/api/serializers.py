@@ -7,8 +7,12 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from django.db import transaction
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer,
+)
 from rest_framework import serializers
 
+from core.constants import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -88,14 +92,14 @@ class UserSerializer(serializers.ModelSerializer):
         return Subscription.objects.filter(user=user, author=obj).exists()
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(DjoserUserCreateSerializer):
 
     password = serializers.CharField(
         write_only=True,
         validators=[validate_password],
     )
 
-    class Meta:
+    class Meta(DjoserUserCreateSerializer.Meta):
         model = User
         fields = (
             'id',
@@ -106,6 +110,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'password',
         )
         read_only_fields = ('id',)
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
 
     def create(self, validated_data: dict) -> AbstractUser:
         password = validated_data.pop('password')
@@ -176,8 +184,8 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'slug',)
-        read_only_fields = ('id', 'name', 'slug',)
+        fields = ('id', 'name', 'slug', 'color',)
+        read_only_fields = ('id', 'name', 'slug', 'color',)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -191,7 +199,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 class RecipeIngredientInSerializer(serializers.Serializer):
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField(min_value=1)
+    amount = serializers.IntegerField(min_value=MIN_INGREDIENT_AMOUNT)
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -291,9 +299,20 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'ingredients',
         )
 
+    def validate(self, attrs: dict) -> dict:
+        cooking_time = attrs.get('cooking_time')
+        if cooking_time is not None and cooking_time < MIN_COOKING_TIME:
+            raise serializers.ValidationError(
+                f'Время готовки не может быть меньше {MIN_COOKING_TIME} '
+                'минуты.'
+            )
+        return attrs
+
     def validate_ingredients(self, value: list[dict[str, Any]]):
         if not value:
-            raise serializers.ValidationError('Нужен хотя бы 1 ингредиент.')
+            raise serializers.ValidationError(
+                f'Нужен хотя бы {MIN_INGREDIENT_AMOUNT} ингредиент.'
+            )
         ids = [item['id'] for item in value]
         if len(ids) != len(set(ids)):
             raise serializers.ValidationError(

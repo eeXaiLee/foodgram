@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.permissions import IsAuthorOrReadOnly
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -19,7 +20,6 @@ from recipes.models import (
 )
 from users.models import Subscription
 
-from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     AvatarResponseSerializer,
     IngredientSerializer,
