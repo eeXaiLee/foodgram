@@ -44,6 +44,11 @@ class UserViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    """Реализация работы с пользователями.
+
+    Поддерживает все CRUD операции и дополнительные экшены для
+    смены пароля, установки аватара и подписки на других пользователей.
+    """
 
     queryset = User.objects.all().order_by('id')
     permission_classes = (AllowAny,)
@@ -184,6 +189,10 @@ class UserViewSet(
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Реализация работы тегов.
+
+    Выдаёт теги списком и по id без пагинации (стабильный порядок).
+    """
 
     queryset = Tag.objects.all().order_by('id')
     serializer_class = TagSerializer
@@ -192,6 +201,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Реализация работы ингредиентов.
+
+    Выдаёт ингредиенты списком и по id без пагинации (стабильный порядок).
+    """
 
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
@@ -208,6 +221,12 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """Реализация работы с рецептами.
+
+    Поддерживает все CRUD операции и дополнительные экшены для
+    добавления/удаления из избранного и корзины, а также выгрузки списка
+    покупок.
+    """
 
     queryset = (
         Recipe.objects.select_related('author')
@@ -291,11 +310,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='favorite',
     )
     def favorite(self, request: Request, pk: str = '') -> Response:
+        """Добавление рецепта в избранное текущего пользователя."""
         recipe = self.get_object()
         return self._add_link(Favorite, request.user, recipe, request)
 
     @favorite.mapping.delete
     def favorite_delete(self, request: Request, pk: str = '') -> Response:
+        """Удаление рецепта из избранного текущего пользователя."""
         recipe = self.get_object()
         return self._remove_link(Favorite, request.user, recipe)
 
@@ -306,11 +327,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='shopping_cart',
     )
     def shopping_cart(self, request: Request, pk: str = '') -> Response:
+        """Добавление рецепта в корзину покупок текущего пользователя."""
         recipe = self.get_object()
         return self._add_link(ShoppingCart, request.user, recipe, request)
 
     @shopping_cart.mapping.delete
     def shopping_cart_delete(self, request: Request, pk: str = '') -> Response:
+        """Удаление рецепта из корзины покупок текущего пользователя."""
         recipe = self.get_object()
         return self._remove_link(ShoppingCart, request.user, recipe)
 
@@ -357,6 +380,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _frontend_recipe_url(request: HttpRequest, recipe_id: int) -> str:
+        """Возвращает ссылку на рецепт на фронтенде."""
         base = request.build_absolute_uri('/')[:-1]
         return f'{base}/recipes/{recipe_id}/'
 
@@ -367,6 +391,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def get_link(self, request: Request, pk: str = '') -> Response:
+        """Получение короткой ссылки на рецепт на фронтенде."""
         recipe = self.get_object()
         short_url = self._frontend_recipe_url(request, recipe.id)
         return Response({'short-link': short_url}, status=status.HTTP_200_OK)

@@ -45,8 +45,7 @@ def _decode_base64(data: str) -> ContentFile:
 
 
 def _absolute_url(request, url: str) -> str:
-    """
-    Строит URL.
+    """Строит URL.
 
     Строит абсолютный URL, если есть request; иначе возвращает url.
     """
@@ -60,6 +59,7 @@ def _current_user(context: dict) -> AbstractUser:
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователя."""
 
     is_subscribed = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
@@ -93,6 +93,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
+    """Создание пользователя."""
 
     password = serializers.CharField(
         write_only=True,
@@ -124,6 +125,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
 
 
 class UserCreateResponseSerializer(serializers.ModelSerializer):
+    """Ответ при создании пользователя."""
 
     class Meta:
         model = User
@@ -144,6 +146,7 @@ class UserCreateResponseSerializer(serializers.ModelSerializer):
 
 
 class SetPasswordSerializer(serializers.Serializer):
+    """Смена пароля пользователя."""
 
     new_password = serializers.CharField(
         write_only=True,
@@ -167,6 +170,8 @@ class SetPasswordSerializer(serializers.Serializer):
 
 
 class SetAvatarSerializer(serializers.Serializer):
+    """Установка аватара пользователя."""
+
     avatar = serializers.CharField(write_only=True)
 
     def save(self, *args, **kwargs) -> AbstractUser:
@@ -177,10 +182,13 @@ class SetAvatarSerializer(serializers.Serializer):
 
 
 class AvatarResponseSerializer(serializers.Serializer):
+    """Ответ с аватаром пользователя."""
+
     avatar = serializers.CharField()
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор тега."""
 
     class Meta:
         model = Tag
@@ -189,6 +197,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор ингредиента."""
 
     class Meta:
         model = Ingredient
@@ -197,12 +206,14 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientInSerializer(serializers.Serializer):
+    """Игредиент в рецепте при создании/обновлении."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField(min_value=MIN_INGREDIENT_AMOUNT)
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """Ингредиент в рецепте при чтении."""
 
     id = serializers.IntegerField(source='ingredient.id', read_only=True)
     name = serializers.CharField(source='ingredient.name', read_only=True)
@@ -219,6 +230,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """Рецепт при чтении."""
 
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -280,6 +292,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
+    """Рецепт при создании/обновлении."""
 
     ingredients = RecipeIngredientInSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -398,6 +411,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
+    """Краткий рецепт."""
 
     image = serializers.SerializerMethodField()
 
@@ -414,6 +428,7 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionUserSerializer(UserSerializer):
+    """Пользователь с подписками."""
 
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
