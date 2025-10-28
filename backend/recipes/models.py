@@ -14,6 +14,7 @@ from core.constants import (
 
 
 class Tag(models.Model):
+    """Тег рецепта."""
 
     name = models.CharField(
         max_length=TAG_NAME_MAX_LEN,
@@ -36,6 +37,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    """Ингредиент рецепта."""
+
     name = models.CharField(
         max_length=INGREDIENT_NAME_MAX_LEN,
         verbose_name='Ингредиент',
@@ -55,6 +58,8 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    """Рецепт."""
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -112,6 +117,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
+    """Ингредиент в рецепте с указанием количества."""
 
     recipe = models.ForeignKey(
         'recipes.Recipe',
@@ -147,6 +153,7 @@ class RecipeIngredient(models.Model):
 
 
 class Favorite(models.Model):
+    """Избранное пользователя."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -176,6 +183,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
+    """Корзина покупок пользователя."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

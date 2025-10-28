@@ -7,8 +7,12 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from django.db import transaction
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer,
+)
 from rest_framework import serializers
 
+from core.constants import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -41,8 +45,7 @@ def _decode_base64(data: str) -> ContentFile:
 
 
 def _absolute_url(request, url: str) -> str:
-    """
-    Строит URL.
+    """Строит URL.
 
     Строит абсолютный URL, если есть request; иначе возвращает url.
     """
@@ -56,6 +59,7 @@ def _current_user(context: dict) -> AbstractUser:
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователя."""
 
     is_subscribed = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
@@ -88,14 +92,15 @@ class UserSerializer(serializers.ModelSerializer):
         return Subscription.objects.filter(user=user, author=obj).exists()
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(DjoserUserCreateSerializer):
+    """Создание пользователя."""
 
     password = serializers.CharField(
         write_only=True,
         validators=[validate_password],
     )
 
-    class Meta:
+    class Meta(DjoserUserCreateSerializer.Meta):
         model = User
         fields = (
             'id',
@@ -106,6 +111,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'password',
         )
         read_only_fields = ('id',)
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
 
     def create(self, validated_data: dict) -> AbstractUser:
         password = validated_data.pop('password')
@@ -116,6 +125,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class UserCreateResponseSerializer(serializers.ModelSerializer):
+    """Ответ при создании пользователя."""
 
     class Meta:
         model = User
@@ -136,6 +146,7 @@ class UserCreateResponseSerializer(serializers.ModelSerializer):
 
 
 class SetPasswordSerializer(serializers.Serializer):
+    """Смена пароля пользователя."""
 
     new_password = serializers.CharField(
         write_only=True,
@@ -159,6 +170,8 @@ class SetPasswordSerializer(serializers.Serializer):
 
 
 class SetAvatarSerializer(serializers.Serializer):
+    """Установка аватара пользователя."""
+
     avatar = serializers.CharField(write_only=True)
 
     def save(self, *args, **kwargs) -> AbstractUser:
@@ -169,10 +182,13 @@ class SetAvatarSerializer(serializers.Serializer):
 
 
 class AvatarResponseSerializer(serializers.Serializer):
+    """Ответ с аватаром пользователя."""
+
     avatar = serializers.CharField()
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор тега."""
 
     class Meta:
         model = Tag
@@ -181,6 +197,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор ингредиента."""
 
     class Meta:
         model = Ingredient
@@ -189,12 +206,14 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientInSerializer(serializers.Serializer):
+    """Игредиент в рецепте при создании/обновлении."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField(min_value=1)
+    amount = serializers.IntegerField(min_value=MIN_INGREDIENT_AMOUNT)
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """Ингредиент в рецепте при чтении."""
 
     id = serializers.IntegerField(source='ingredient.id', read_only=True)
     name = serializers.CharField(source='ingredient.name', read_only=True)
@@ -211,6 +230,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """Рецепт при чтении."""
 
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -272,6 +292,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
+    """Рецепт при создании/обновлении."""
 
     ingredients = RecipeIngredientInSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -291,9 +312,20 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'ingredients',
         )
 
+    def validate(self, attrs: dict) -> dict:
+        cooking_time = attrs.get('cooking_time')
+        if cooking_time is not None and cooking_time < MIN_COOKING_TIME:
+            raise serializers.ValidationError(
+                f'Время готовки не может быть меньше {MIN_COOKING_TIME} '
+                'минуты.'
+            )
+        return attrs
+
     def validate_ingredients(self, value: list[dict[str, Any]]):
         if not value:
-            raise serializers.ValidationError('Нужен хотя бы 1 ингредиент.')
+            raise serializers.ValidationError(
+                f'Нужен хотя бы {MIN_INGREDIENT_AMOUNT} ингредиент.'
+            )
         ids = [item['id'] for item in value]
         if len(ids) != len(set(ids)):
             raise serializers.ValidationError(
@@ -379,6 +411,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
+    """Краткий рецепт."""
 
     image = serializers.SerializerMethodField()
 
@@ -395,6 +428,7 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionUserSerializer(UserSerializer):
+    """Пользователь с подписками."""
 
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()

@@ -6,6 +6,7 @@ from core.constants import USER_EMAIL_MAX_LEN
 
 
 class User(AbstractUser):
+    """Пользователь системы."""
 
     email = models.EmailField(
         max_length=USER_EMAIL_MAX_LEN,
@@ -31,6 +32,7 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
+    """Подписка пользователя на автора рецептов."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
