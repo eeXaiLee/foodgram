@@ -57,8 +57,8 @@ const About = () => {
               </p>
               <p className={styles.textItem}>
                 API (OpenAPI):{" "}
-                <a href="/docs/redoc.html" className={styles.textLink}>
-                  /docs/redoc.html
+                <a href="/api/docs/" className={styles.textLink} target="_blank" rel="noreferrer">
+                  /api/docs/
                 </a>
               </p>
               <p className={styles.textItem}>
