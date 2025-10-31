@@ -45,9 +45,7 @@ const Technologies = () => {
             <ul className={styles.text}>
               <li className={styles.textItem}>flake8 (код-стайл)</li>
               <li className={styles.textItem}>pytest (юнит/интеграционные тесты backend)</li>
-              <li className={styles.textItem}>
-                OpenAPI/Redoc: <a href="/docs/redoc.html" className={styles.textLink}>/docs/redoc.html</a>
-              </li>
+              <li className={styles.textItem}>OpenAPI/Redoc</li>
             </ul>
 
             <h2 className={styles.subtitle}>Архитектура на уровне сервиса</h2>
