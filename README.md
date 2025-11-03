@@ -7,7 +7,7 @@ Foodgram — платформa, где пользователи публикую
 
 ---
 
-## 🚀 Возможности
+## Возможности
 - Регистрация и аутентификация пользователей (Djoser, токены).
 - Публикация рецептов с ингредиентами и тегами.
 - Поиск ингредиентов по вхождению названия.
@@ -20,7 +20,7 @@ Foodgram — платформa, где пользователи публикую
   
 ---
 
-## 🧱 Технологии
+## Технологии
 - **Backend:** Python 3.12, Django 5.1, DRF 3.15, Djoser, Pillow, django-filter
 - **DB:** PostgreSQL 13 (локально можно SQLite)
 - **Infra:** Docker, Docker Compose, Nginx, Gunicorn
@@ -30,7 +30,7 @@ Foodgram — платформa, где пользователи публикую
 
 ---
 
-## 🗂 Архитектура контейнеров
+## Архитектура контейнеров
 - `db` — PostgreSQL 13
 - `backend` — Django + Gunicorn (`0.0.0.0:8888`)
 - `frontend` — одноразовый контейнер сборки CRA; копирует build в том `static_volume`
@@ -43,7 +43,7 @@ Foodgram — платформa, где пользователи публикую
 
 ---
 
-## ⚙️ Переменные окружения (`.env`)
+## Переменные окружения (`.env`)
 Пример `.env` (используется и локально, и в проде):
 ```
 POSTGRES_DB=foodgram
@@ -59,7 +59,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1,backend,foodgram-evg.duckdns.org
 
 ---
 
-## ▶️ Локальный запуск (Docker)
+## Локальный запуск (Docker)
 1. Установите Docker Desktop/Engine.
 2. Создайте `.env` в корне репозитория (см. пример выше).
 3. Запустите оркестрацию:
@@ -84,7 +84,7 @@ docker compose restart nginx
 
 ---
 
-## 🧰 Управление зависимостями (pip-tools)
+## Управление зависимостями (pip-tools)
 В каталоге `backend/`:
 ```bash
 # базовые
@@ -99,7 +99,7 @@ pip-compile -o requirements/requirements.test.txt requirements/requirements.test
 
 ---
 
-## 🧪 Тесты
+## Тесты
 ### Локально
 По умолчанию в `settings.py` база — **SQLite**. Просто:
 ```bash
@@ -113,7 +113,7 @@ GitHub Actions поднимает сервис PostgreSQL и разворачи�
 
 ---
 
-## 📦 Продакшен-деплой (Docker Compose)
+## Продакшен-деплой (Docker Compose)
 На сервере (Linux), структура в каталоге `~/foodgram`:
 ```
 ~/foodgram
@@ -157,7 +157,7 @@ sudo certbot --nginx -d foodgram-evg.duckdns.org
 
 ---
 
-## 🔁 CI/CD (GitHub Actions → Docker Hub → сервер)
+## CI/CD (GitHub Actions → Docker Hub → сервер)
 Пайплайн:
 1. **Линт бекенда (flake8)**
 2. **Тесты бекенда** (PostgreSQL как сервис)
@@ -172,7 +172,7 @@ sudo certbot --nginx -d foodgram-evg.duckdns.org
 
 ---
 
-## 🛠 Полезные команды
+## Полезные команды
 ```bash
 # Логи
 docker compose logs -f backend
@@ -187,7 +187,15 @@ docker compose exec backend python manage.py load_ingredients
 
 ---
 
-## 📎 Ссылки проекта
+## Demo admin account (для проверки админ-панели)
+
+URL: `/admin/`  
+**Логин:** `admin@example.com`  
+**Пароль:** `admin_pass`
+
+---
+
+## Ссылки проекта
 - Автор: **[Евгений Димитриев](https://github.com/eeXaiLee)**
 - Репозиторий: **https://github.com/eeXaiLee/foodgram**
 - API (Redoc): `/api/docs/redoc.html`
