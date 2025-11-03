@@ -272,9 +272,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart',
         )
 
-    def get_image(self, obj: Recipe) -> str | None:
-        if not obj.image:
-            return None
+    def get_image(self, obj: Recipe) -> str:
         request = self.context.get('request')
         return _absolute_url(request, obj.image.url)
 
@@ -382,19 +380,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     ) -> Recipe:
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
-        image_b64 = validated_data.pop('image', None)
+        image_b64 = validated_data.pop('image')
 
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
 
-        if image_b64 is not None:
-            if image_b64:
-                content = _decode_base64(image_b64)
-                instance.image.save(content.name, content, save=False)
-            else:
-                if instance.image:
-                    instance.image.delete(save=False)
-                instance.image = None
+        content = _decode_base64(image_b64)
+        instance.image.save(content.name, content, save=False)
+
         instance.save()
 
         if tags is not None:
@@ -420,9 +413,7 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
 
-    def get_image(self, obj: Recipe) -> str | None:
-        if not obj.image:
-            return None
+    def get_image(self, obj: Recipe) -> str:
         request = self.context.get('request')
         return _absolute_url(request, obj.image.url)
 
