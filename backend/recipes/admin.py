@@ -28,7 +28,11 @@ class IngredientAdmin(admin.ModelAdmin):
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
+    autocomplete_fields = ('ingredient',)
+    fields = ('ingredient', 'amount',)
+    show_change_link = True
     extra = 1
+    min_num = 1
 
 
 @admin.register(Recipe)
@@ -38,6 +42,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'id', 'name', 'author', 'cooking_time', 'pub_date', 'favorites_count',
     )
     list_filter = ('author', 'tags',)
+    filter_horizontal = ('tags',)
     search_fields = ('name', 'author__email', 'author__username',)
     inlines = (RecipeIngredientInline,)
     list_select_related = ('author',)

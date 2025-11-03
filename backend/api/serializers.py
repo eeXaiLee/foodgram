@@ -380,13 +380,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     ) -> Recipe:
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
-        image_b64 = validated_data.pop('image')
+        image_b64 = validated_data.pop('image', None)
 
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
 
-        content = _decode_base64(image_b64)
-        instance.image.save(content.name, content, save=False)
+        if image_b64 is not None:
+            content = _decode_base64(image_b64)
+            instance.image.save(content.name, content, save=False)
 
         instance.save()
 
