@@ -23,6 +23,8 @@ class Tag(models.Model):
     )
     slug = models.SlugField(
         max_length=TAG_SLUG_MAX_LEN,
+        blank=True,
+        null=True,
         unique=True,
         verbose_name='Слаг',
     )
@@ -41,6 +43,7 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         max_length=INGREDIENT_NAME_MAX_LEN,
+        unique=True,
         verbose_name='Ингредиент',
     )
     measurement_unit = models.CharField(
@@ -75,8 +78,6 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         upload_to='recipes/',
-        blank=True,
-        null=True,
         verbose_name='Изображение блюда',
     )
     cooking_time = models.PositiveIntegerField(

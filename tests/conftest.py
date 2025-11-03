@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
@@ -59,11 +60,17 @@ def ingredient(db):
 @pytest.fixture
 def make_recipe(user, tag, ingredient):
     def _make_recipe(name='Омлет', amount=2):
+        image = SimpleUploadedFile(
+            'test_image.jpg',
+            b'fake-image-content',
+            content_type='image/jpeg',
+        )
         recipe = Recipe.objects.create(
             author=user,
             name=name,
             text='Домашний омлет',
             cooking_time=10,
+            image=image,
         )
 
         recipe.tags.add(tag)
