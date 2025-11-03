@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR.parent / 'data'
+DATA_DIR = Path(os.getenv('DATA_DIR', BASE_DIR / 'data'))
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
 
