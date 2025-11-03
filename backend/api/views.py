@@ -1,7 +1,7 @@
 from typing import Any, Type
 
 from django.contrib.auth import get_user_model
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.http import HttpRequest, HttpResponse
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -254,11 +254,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if author_id:
             queryset = queryset.filter(author__id=author_id)
 
-        tag_slugs = params.getlist('tags')
-        if tag_slugs:
-            queryset = queryset.filter(tags__slug__in=tag_slugs).distinct()
+        tag_params = params.getlist('tags')
+        if tag_params:
+            slugs = [tag for tag in tag_params if not tag.isdigit()]
+            ids = [int(tag) for tag in tag_params if tag.isdigit()]
+            queryset = queryset.filter(
+                Q(tags__slug__in=slugs) | Q(tags__id__in=ids)
+            ).distinct()
 
-        if params.get('is_favorited') == '1':
+        if params.get('is_favorited', '').lower() in ('1', 'true'):
             if request_user:
                 favorite_ids = Favorite.objects.filter(
                     user=request_user
@@ -267,7 +271,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             else:
                 queryset = queryset.none()
 
-        if params.get('is_in_shopping_cart') == '1':
+        if params.get('is_in_shopping_cart', '').lower() in ('1', 'true'):
             if request_user:
                 cart_ids = ShoppingCart.objects.filter(
                     user=request_user
