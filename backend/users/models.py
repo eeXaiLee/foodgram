@@ -2,7 +2,9 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from core.constants import USER_EMAIL_MAX_LEN
+from core.constants import (
+    USER_EMAIL_MAX_LEN, USER_FIRST_NAME_MAX_LEN, USER_LAST_NAME_MAX_LEN
+)
 
 
 class User(AbstractUser):
@@ -17,6 +19,16 @@ class User(AbstractUser):
         upload_to='users/',
         blank=True,
         null=True
+    )
+    first_name = models.CharField(
+        max_length=USER_FIRST_NAME_MAX_LEN,
+        blank=True,
+        verbose_name='Имя'
+    )
+    last_name = models.CharField(
+        max_length=USER_LAST_NAME_MAX_LEN,
+        blank=True,
+        verbose_name='Фамилия'
     )
 
     USERNAME_FIELD = 'email'
