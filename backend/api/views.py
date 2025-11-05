@@ -128,7 +128,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         if request.method == 'DELETE':
             if getattr(current_user, 'avatar', None):
                 current_user.avatar.delete(save=False)
-                current_user.avatar = None
+                current_user.avatar = ''
                 current_user.save(update_fields=['avatar'])
             return Response(status=status.HTTP_204_NO_CONTENT)
 
