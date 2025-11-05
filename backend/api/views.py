@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q, Sum
@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 
 from core.permissions import IsAuthorOrReadOnly
 from recipes.models import (
@@ -38,6 +39,18 @@ from .serializers import (
 User = get_user_model()
 
 
+class MultiSerializerViewSetMixin:
+    """Выбор сериализатора."""
+
+    serializer_classes: Optional[dict[str, Type[Serializer]]] = None
+
+    def get_serializer_class(self):
+        try:
+            return self.serializer_classes[self.action]
+        except KeyError:
+            return super().get_serializer_class()
+
+
 class ListCreateRetrieveViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -49,7 +62,7 @@ class ListCreateRetrieveViewSet(
     pass
 
 
-class UserViewSet(ListCreateRetrieveViewSet):
+class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
     """Реализация работы с пользователями.
 
     Поддерживает все CRUD операции и дополнительные экшены для
@@ -58,17 +71,13 @@ class UserViewSet(ListCreateRetrieveViewSet):
 
     queryset = User.objects.order_by('id')
     permission_classes = (AllowAny,)
-
-    def get_serializer_class(self) -> (
-            Type[UserCreateSerializer | SetPasswordSerializer | UserSerializer]
-    ):
-        if self.action == 'create':
-            return UserCreateSerializer
-        if self.action == 'set_password':
-            return SetPasswordSerializer
-        if self.action in ('subscribe', 'subscriptions'):
-            return SubscriptionUserSerializer
-        return UserSerializer
+    serializer_class = UserSerializer
+    serializer_classes = {
+        'create': UserCreateSerializer,
+        'set_password': SetPasswordSerializer,
+        'subscribe': SubscriptionUserSerializer,
+        'subscriptions': SubscriptionUserSerializer,
+    }
 
     def create(self, request, *args, **kwargs) -> Response:
         serializer = self.get_serializer(data=request.data)
@@ -226,7 +235,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class RecipeViewSet(viewsets.ModelViewSet):
+class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     """Реализация работы с рецептами.
 
     Поддерживает все CRUD операции и дополнительные экшены для
@@ -240,13 +249,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         .order_by('-pub_date', 'id')
     )
     permission_classes = (IsAuthorOrReadOnly,)
-
-    def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
-            return RecipeReadSerializer
-        if self.action in ('favorite', 'shopping_cart'):
-            return RecipeShortSerializer
-        return RecipeWriteSerializer
+    serializer_class = RecipeWriteSerializer
+    serializer_classes = {
+        'list': RecipeReadSerializer,
+        'retrieve': RecipeReadSerializer,
+        'favorite': RecipeShortSerializer,
+        'shopping_cart': RecipeShortSerializer,
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset()
