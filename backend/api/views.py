@@ -38,12 +38,18 @@ from .serializers import (
 User = get_user_model()
 
 
-class UserViewSet(
+class ListCreateRetrieveViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    """Реализация базового вьюсета для list, create и retrieve."""
+
+    pass
+
+
+class UserViewSet(ListCreateRetrieveViewSet):
     """Реализация работы с пользователями.
 
     Поддерживает все CRUD операции и дополнительные экшены для
