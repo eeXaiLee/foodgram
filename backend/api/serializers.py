@@ -12,7 +12,12 @@ from djoser.serializers import (
 )
 from rest_framework import serializers
 
-from core.constants import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
+from core.constants import (
+    MAX_COOKING_TIME,
+    MAX_INGREDIENT_AMOUNT,
+    MIN_COOKING_TIME,
+    MIN_INGREDIENT_AMOUNT,
+)
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -209,7 +214,10 @@ class RecipeIngredientInSerializer(serializers.Serializer):
     """Игредиент в рецепте при создании/обновлении."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField(min_value=MIN_INGREDIENT_AMOUNT)
+    amount = serializers.IntegerField(
+        min_value=MIN_INGREDIENT_AMOUNT,
+        max_value=MAX_INGREDIENT_AMOUNT,
+    )
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -312,11 +320,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs: dict) -> dict:
         cooking_time = attrs.get('cooking_time')
-        if cooking_time is not None and cooking_time < MIN_COOKING_TIME:
-            raise serializers.ValidationError(
-                f'Время готовки не может быть меньше {MIN_COOKING_TIME} '
-                'минуты.'
-            )
+        if cooking_time is not None:
+            if cooking_time < MIN_COOKING_TIME:
+                raise serializers.ValidationError(
+                    f'Время готовки не может быть меньше {MIN_COOKING_TIME} '
+                    'минуты.'
+                )
+            if cooking_time > MAX_COOKING_TIME:
+                raise serializers.ValidationError(
+                    f'Время готовки не может быть больше {MAX_COOKING_TIME} '
+                    'минут.'
+                )
         return attrs
 
     def validate_ingredients(self, value: list[dict[str, Any]]):

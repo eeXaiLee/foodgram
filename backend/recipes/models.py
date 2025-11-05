@@ -1,10 +1,12 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.constants import (
     INGREDIENT_MEASUREMENT_UNIT_MAX_LEN,
     INGREDIENT_NAME_MAX_LEN,
+    MAX_COOKING_TIME,
+    MAX_INGREDIENT_AMOUNT,
     MIN_COOKING_TIME,
     MIN_INGREDIENT_AMOUNT,
     RECIPE_NAME_MAX_LEN,
@@ -80,10 +82,13 @@ class Recipe(models.Model):
         upload_to='recipes/',
         verbose_name='Изображение блюда',
     )
-    cooking_time = models.PositiveIntegerField(
-        validators=[MinValueValidator(MIN_COOKING_TIME)],
+    cooking_time = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(MIN_COOKING_TIME),
+            MaxValueValidator(MAX_COOKING_TIME),
+        ],
         verbose_name='Время готовки (мин)',
-        help_text='Минимум 1 минута',
+        help_text='От 1 до 1440 минут.',
     )
     tags = models.ManyToManyField(
         'recipes.Tag',
@@ -132,10 +137,13 @@ class RecipeIngredient(models.Model):
         related_name='ingredient_in_recipes',
         verbose_name='Связанный ингредиент',
     )
-    amount = models.PositiveIntegerField(
-        validators=[MinValueValidator(MIN_INGREDIENT_AMOUNT)],
+    amount = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(MIN_INGREDIENT_AMOUNT),
+            MaxValueValidator(MAX_INGREDIENT_AMOUNT),
+        ],
         verbose_name='Количество',
-        help_text='Минимум 1 (единица измерения)',
+        help_text='От 1 до 10000 (единица измерения).',
     )
 
     class Meta:
