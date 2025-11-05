@@ -149,7 +149,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         permission_classes=(IsAuthenticated,),
         url_path='subscribe',
     )
-    def subscribe(self, request: Request, pk: str = '') -> Response:
+    def subscribe(self, request: Request, pk: int) -> Response:
         author = self.get_object()
         if author == request.user:
             return Response(
@@ -171,7 +171,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         return Response(data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
-    def unsubscribe(self, request: Request, pk: str = '') -> Response:
+    def unsubscribe(self, request: Request, pk: int) -> Response:
         author = self.get_object()
         deleted, _ = Subscription.objects.filter(
             user=request.user,
@@ -327,13 +327,13 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_path='favorite',
     )
-    def favorite(self, request: Request, pk: str = '') -> Response:
+    def favorite(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в избранное текущего пользователя."""
         recipe = self.get_object()
         return self._add_link(Favorite, request.user, recipe, request)
 
     @favorite.mapping.delete
-    def favorite_delete(self, request: Request, pk: str = '') -> Response:
+    def favorite_delete(self, request: Request, pk: int) -> Response:
         """Удаление рецепта из избранного текущего пользователя."""
         recipe = self.get_object()
         return self._remove_link(Favorite, request.user, recipe)
@@ -344,13 +344,13 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_path='shopping_cart',
     )
-    def shopping_cart(self, request: Request, pk: str = '') -> Response:
+    def shopping_cart(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в корзину покупок текущего пользователя."""
         recipe = self.get_object()
         return self._add_link(ShoppingCart, request.user, recipe, request)
 
     @shopping_cart.mapping.delete
-    def shopping_cart_delete(self, request: Request, pk: str = '') -> Response:
+    def shopping_cart_delete(self, request: Request, pk: int) -> Response:
         """Удаление рецепта из корзины покупок текущего пользователя."""
         recipe = self.get_object()
         return self._remove_link(ShoppingCart, request.user, recipe)
@@ -408,7 +408,7 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         permission_classes=(AllowAny,),
         url_path='get-link',
     )
-    def get_link(self, request: Request, pk: str = '') -> Response:
+    def get_link(self, request: Request, pk: int) -> Response:
         """Получение короткой ссылки на рецепт на фронтенде."""
         recipe = self.get_object()
         short_url = self._frontend_recipe_url(request, recipe.id)
