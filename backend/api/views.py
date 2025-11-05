@@ -23,12 +23,15 @@ from users.models import Subscription
 
 from .serializers import (
     AvatarResponseSerializer,
+    FavoriteActionSerializer,
     IngredientSerializer,
     RecipeReadSerializer,
     RecipeShortSerializer,
     RecipeWriteSerializer,
     SetAvatarSerializer,
     SetPasswordSerializer,
+    ShoppingCartActionSerializer,
+    SubscribeActionSerializer,
     SubscriptionUserSerializer,
     TagSerializer,
     UserCreateResponseSerializer,
@@ -75,7 +78,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
     serializer_classes = {
         'create': UserCreateSerializer,
         'set_password': SetPasswordSerializer,
-        'subscribe': SubscriptionUserSerializer,
+        'subscribe': SubscribeActionSerializer,
         'subscriptions': SubscriptionUserSerializer,
     }
 
@@ -151,20 +154,12 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
     )
     def subscribe(self, request: Request, pk: int) -> Response:
         author = self.get_object()
-        if author == request.user:
-            return Response(
-                {'errors': 'Нельзя подписаться на себя.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        _, created = Subscription.objects.get_or_create(
-            user=request.user,
-            author=author,
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        Subscription.objects.get_or_create(
+            user=request.user, author=author
         )
-        if not created:
-            return Response(
-                {'errors': 'Уже подписаны.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+
         data = SubscriptionUserSerializer(
             author, context={'request': request}
         ).data
@@ -253,8 +248,8 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     serializer_classes = {
         'list': RecipeReadSerializer,
         'retrieve': RecipeReadSerializer,
-        'favorite': RecipeShortSerializer,
-        'shopping_cart': RecipeShortSerializer,
+        'favorite': FavoriteActionSerializer,
+        'shopping_cart': ShoppingCartActionSerializer,
     }
 
     def get_queryset(self):
@@ -330,6 +325,8 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     def favorite(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в избранное текущего пользователя."""
         recipe = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         return self._add_link(Favorite, request.user, recipe, request)
 
     @favorite.mapping.delete
@@ -347,6 +344,8 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     def shopping_cart(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в корзину покупок текущего пользователя."""
         recipe = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         return self._add_link(ShoppingCart, request.user, recipe, request)
 
     @shopping_cart.mapping.delete

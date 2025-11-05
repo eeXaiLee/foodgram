@@ -470,3 +470,55 @@ class SubscriptionUserSerializer(UserSerializer):
 
     def get_recipes_count(self, obj: Any) -> int:
         return Recipe.objects.filter(author=obj).count()
+
+
+class SubscribeActionSerializer(serializers.Serializer):
+    """Валидация действий подписки."""
+
+    def validate(self, attrs):
+        request = self.context['request']
+        view = self.context['view']
+        author = view.get_object()
+        user = request.user
+
+        if author == user:
+            raise serializers.ValidationError(
+                {'errors': 'Нельзя подписаться на себя.'}
+            )
+        if Subscription.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Уже подписаны.'}
+            )
+        return attrs
+
+
+class FavoriteActionSerializer(serializers.Serializer):
+    """Валидация действий избранного."""
+
+    def validate(self, attrs):
+        request = self.context['request']
+        view = self.context['view']
+        recipe = view.get_object()
+        user = request.user
+
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Рецепт уже в избранном.'}
+            )
+        return attrs
+
+
+class ShoppingCartActionSerializer(serializers.Serializer):
+    """Валидация действий корзины покупок."""
+
+    def validate(self, attrs):
+        request = self.context['request']
+        view = self.context['view']
+        recipe = view.get_object()
+        user = request.user
+
+        if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Рецепт уже в корзине покупок.'}
+            )
+        return attrs
