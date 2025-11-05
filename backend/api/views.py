@@ -153,12 +153,10 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         url_path='subscribe',
     )
     def subscribe(self, request: Request, pk: int) -> Response:
-        author = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        Subscription.objects.get_or_create(
-            user=request.user, author=author
-        )
+        serializer.save()
+        author = self.get_object()
 
         data = SubscriptionUserSerializer(
             author, context={'request': request}
@@ -291,16 +289,12 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
 
         return queryset
 
-    def _add_link(
-            self, model: Any, user: Any, recipe: Recipe, request: Request
-    ) -> Response:
+    def _add_link(self, request: Request) -> Response:
         """Создаёт связь user-recipe в указанной модели."""
-        _, created = model.objects.get_or_create(user=user, recipe=recipe)
-        if not created:
-            return Response(
-                {'errors': 'Уже добавлено.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        recipe = self.get_object()
         data = RecipeShortSerializer(
             recipe, context={'request': request}
         ).data
@@ -324,10 +318,7 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     )
     def favorite(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в избранное текущего пользователя."""
-        recipe = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return self._add_link(Favorite, request.user, recipe, request)
+        return self._add_link(request)
 
     @favorite.mapping.delete
     def favorite_delete(self, request: Request, pk: int) -> Response:
@@ -343,10 +334,7 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     )
     def shopping_cart(self, request: Request, pk: int) -> Response:
         """Добавление рецепта в корзину покупок текущего пользователя."""
-        recipe = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return self._add_link(ShoppingCart, request.user, recipe, request)
+        return self._add_link(request)
 
     @shopping_cart.mapping.delete
     def shopping_cart_delete(self, request: Request, pk: int) -> Response:

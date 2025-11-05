@@ -491,6 +491,11 @@ class SubscribeActionSerializer(serializers.Serializer):
             )
         return attrs
 
+    def create(self, validated_data):
+        request = self.context['request']
+        author = self.context['view'].get_object()
+        return Subscription.objects.create(user=request.user, author=author)
+
 
 class FavoriteActionSerializer(serializers.Serializer):
     """Валидация действий избранного."""
@@ -507,6 +512,11 @@ class FavoriteActionSerializer(serializers.Serializer):
             )
         return attrs
 
+    def create(self, validated_data):
+        request = self.context['request']
+        recipe = self.context['view'].get_object()
+        return Favorite.objects.create(user=request.user, recipe=recipe)
+
 
 class ShoppingCartActionSerializer(serializers.Serializer):
     """Валидация действий корзины покупок."""
@@ -522,3 +532,8 @@ class ShoppingCartActionSerializer(serializers.Serializer):
                 {'errors': 'Рецепт уже в корзине покупок.'}
             )
         return attrs
+
+    def create(self, validated_data):
+        request = self.context['request']
+        recipe = self.context['view'].get_object()
+        return ShoppingCart.objects.create(user=request.user, recipe=recipe)
