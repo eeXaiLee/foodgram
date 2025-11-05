@@ -56,7 +56,7 @@ class UserViewSet(ListCreateRetrieveViewSet):
     смены пароля, установки аватара и подписки на других пользователей.
     """
 
-    queryset = User.objects.all().order_by('id')
+    queryset = User.objects.order_by('id')
     permission_classes = (AllowAny,)
 
     def get_serializer_class(self) -> (
@@ -200,7 +200,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     Выдаёт теги списком и по id без пагинации (стабильный порядок).
     """
 
-    queryset = Tag.objects.all().order_by('id')
+    queryset = Tag.objects.order_by('id')
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
@@ -217,7 +217,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        queryset = Ingredient.objects.all().order_by('id')
+        queryset = Ingredient.objects.order_by('id')
         name_prefix = self.request.query_params.get('name')
 
         if name_prefix:
@@ -237,7 +237,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = (
         Recipe.objects.select_related('author')
         .prefetch_related('tags', 'recipe_ingredients__ingredient')
-        .all()
         .order_by('-pub_date', 'id')
     )
     permission_classes = (IsAuthorOrReadOnly,)
