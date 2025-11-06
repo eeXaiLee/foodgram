@@ -292,6 +292,30 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         """Добавление/удаление рецепта в корзине текущего пользователя."""
         return self._recipe_link(request, ShoppingCart)
 
+    def _shopping_rows(self, user):
+        """Возвращает queryset с ингредиентами для списка покупок."""
+        return (
+            RecipeIngredient.objects.filter(
+                recipe__in_carts__user=user
+            ).values(
+                name=F('ingredient__name'),
+                unit=F('ingredient__measurement_unit'),
+            ).annotate(total=Sum('amount'))
+            .order_by('name', 'unit')
+        )
+
+    @staticmethod
+    def _render_shopping_list(rows) -> str:
+        """Форматирует список покупок в текстовый вид."""
+        lines = []
+        for row in rows:
+            lines.append(f'{row["name"]} ({row["unit"]}) — {row["total"]}.')
+
+        if not lines:
+            lines = ['Ваш список покупок пуст.']
+
+        return '\n'.join(lines)
+
     @action(
         detail=False,
         methods=('get',),
@@ -305,24 +329,8 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         .txt файл.
         Формат строки: "Название (ед.) - количество".
         """
-        queryset = (
-            RecipeIngredient.objects.filter(
-                recipe__in_carts__user=request.user
-            ).values(
-                name=F('ingredient__name'),
-                unit=F('ingredient__measurement_unit'),
-            ).annotate(total=Sum('amount'))
-            .order_by('name', 'unit')
-        )
-
-        lines = []
-        for row in queryset:
-            lines.append(f'{row["name"]} ({row["unit"]}) — {row["total"]}.')
-
-        if not lines:
-            lines = ['Ваш список покупок пуст.']
-
-        content = '\n'.join(lines)
+        rows = self._shopping_rows(request.user)
+        content = self._render_shopping_list(rows)
 
         response = HttpResponse(
             content,
