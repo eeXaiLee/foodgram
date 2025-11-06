@@ -195,12 +195,13 @@ class Favorite(UserRecipeListBase):
         return f'{self.user} ✯ {self.recipe}'
 
 
-class ShoppingCart(models.Model):
+class ShoppingCart(UserRecipeListBase):
     """Корзина покупок пользователя."""
 
     class Meta:
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины'
+        default_related_name = 'in_carts'
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
