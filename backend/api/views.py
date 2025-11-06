@@ -1,7 +1,7 @@
 from typing import Any, Optional, Type
 
 from django.contrib.auth import get_user_model
-from django.db.models import F, Q, Sum
+from django.db.models import F, Sum
 from django.http import HttpRequest, HttpResponse
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -10,6 +10,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
+from api.filters import IngredientFilter, RecipeFilter
 from core.permissions import IsAuthorOrReadOnly
 from recipes.models import (
     Favorite,
@@ -217,15 +218,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
-
-    def get_queryset(self):
-        queryset = Ingredient.objects.order_by('id')
-        name_prefix = self.request.query_params.get('name')
-
-        if name_prefix:
-            queryset = queryset.filter(name__istartswith=name_prefix)
-
-        return queryset
+    queryset = Ingredient.objects.order_by('id')
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
@@ -249,45 +243,7 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         'favorite': FavoriteActionSerializer,
         'shopping_cart': ShoppingCartActionSerializer,
     }
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        params = self.request.query_params
-        request_user = (
-            self.request.user if self.request.user.is_authenticated else None
-        )
-
-        author_id = params.get('author')
-        if author_id:
-            queryset = queryset.filter(author__id=author_id)
-
-        tag_params = params.getlist('tags')
-        if tag_params:
-            slugs = [tag for tag in tag_params if not tag.isdigit()]
-            ids = [int(tag) for tag in tag_params if tag.isdigit()]
-            queryset = queryset.filter(
-                Q(tags__slug__in=slugs) | Q(tags__id__in=ids)
-            ).distinct()
-
-        if params.get('is_favorited', '').lower() in ('1', 'true'):
-            if request_user:
-                favorite_ids = Favorite.objects.filter(
-                    user=request_user
-                ).values_list('recipe_id', flat=True)
-                queryset = queryset.filter(id__in=favorite_ids)
-            else:
-                queryset = queryset.none()
-
-        if params.get('is_in_shopping_cart', '').lower() in ('1', 'true'):
-            if request_user:
-                cart_ids = ShoppingCart.objects.filter(
-                    user=request_user
-                ).values_list('recipe_id', flat=True)
-                queryset = queryset.filter(id__in=cart_ids)
-            else:
-                queryset = queryset.none()
-
-        return queryset
+    filterset_class = RecipeFilter
 
     def _add_link(self, request: Request) -> Response:
         """Создаёт связь user-recipe в указанной модели."""
