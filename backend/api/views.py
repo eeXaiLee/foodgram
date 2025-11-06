@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type
+from typing import Optional, Type
 
 from django.contrib.auth import get_user_model
 from django.db.models import F, Sum
@@ -245,20 +245,26 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     }
     filterset_class = RecipeFilter
 
-    def _add_link(self, request: Request) -> Response:
-        """Создаёт связь user-recipe в указанной модели."""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        recipe = self.get_object()
-        data = RecipeShortSerializer(
-            recipe, context={'request': request}
-        ).data
-        return Response(data, status=status.HTTP_201_CREATED)
+    def _recipe_link(
+        self,
+        request: Request,
+        model: type[Favorite] | type[ShoppingCart],
+    ) -> Response:
+        """Общий обработчик POST/DELETE для избранного и корзины."""
+        if request.method == 'POST':
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            recipe = self.get_object()
+            data = RecipeShortSerializer(
+                recipe, context={'request': request}
+            ).data
+            return Response(data, status=status.HTTP_201_CREATED)
 
-    def _remove_link(self, model: Any, user: Any, recipe: Recipe) -> Response:
-        """Удаляет связь user-recipe в указанной модели."""
-        deleted, _ = model.objects.filter(user=user, recipe=recipe).delete()
+        recipe = self.get_object()
+        deleted, _ = model.objects.filter(
+            user=request.user, recipe=recipe
+        ).delete()
         if deleted == 0:
             return Response(
                 {'errors': 'Нечего удалять.'},
@@ -268,35 +274,23 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=('post',),
+        methods=('post', 'delete'),
         permission_classes=(IsAuthenticated,),
         url_path='favorite',
     )
     def favorite(self, request: Request, pk: int) -> Response:
-        """Добавление рецепта в избранное текущего пользователя."""
-        return self._add_link(request)
-
-    @favorite.mapping.delete
-    def favorite_delete(self, request: Request, pk: int) -> Response:
-        """Удаление рецепта из избранного текущего пользователя."""
-        recipe = self.get_object()
-        return self._remove_link(Favorite, request.user, recipe)
+        """Добавление/удаление рецепта в избранном текущего пользователя."""
+        return self._recipe_link(request, Favorite)
 
     @action(
         detail=True,
-        methods=('post',),
+        methods=('post', 'delete'),
         permission_classes=(IsAuthenticated,),
         url_path='shopping_cart',
     )
     def shopping_cart(self, request: Request, pk: int) -> Response:
-        """Добавление рецепта в корзину покупок текущего пользователя."""
-        return self._add_link(request)
-
-    @shopping_cart.mapping.delete
-    def shopping_cart_delete(self, request: Request, pk: int) -> Response:
-        """Удаление рецепта из корзины покупок текущего пользователя."""
-        recipe = self.get_object()
-        return self._remove_link(ShoppingCart, request.user, recipe)
+        """Добавление/удаление рецепта в корзине текущего пользователя."""
+        return self._recipe_link(request, ShoppingCart)
 
     @action(
         detail=False,
