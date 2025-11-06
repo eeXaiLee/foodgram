@@ -122,11 +122,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
         }
 
     def create(self, validated_data: dict) -> AbstractUser:
-        password = validated_data.pop('password')
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        return User.objects.create_user(**validated_data)
 
 
 class UserCreateResponseSerializer(serializers.ModelSerializer):
