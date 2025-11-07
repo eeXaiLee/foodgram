@@ -244,8 +244,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     image = serializers.SerializerMethodField()
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Recipe
@@ -279,18 +279,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_image(self, obj: Recipe) -> str:
         request = self.context.get('request')
         return _absolute_url(request, obj.image.url)
-
-    def get_is_favorited(self, obj: Recipe) -> bool:
-        user = _current_user(self.context)
-        if not user or not user.is_authenticated:
-            return False
-        return Favorite.objects.filter(user=user, recipe=obj).exists()
-
-    def get_is_in_shopping_cart(self, obj: Recipe) -> bool:
-        user = _current_user(self.context)
-        if not user or not user.is_authenticated:
-            return False
-        return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 from typing import Optional, Type
 
 from django.contrib.auth import get_user_model
-from django.db.models import F, Sum
+from django.db.models import BooleanField, Exists, F, OuterRef, Sum, Value
 from django.http import HttpRequest, HttpResponse
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -244,6 +244,30 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         'shopping_cart': ShoppingCartActionSerializer,
     }
     filterset_class = RecipeFilter
+
+    @staticmethod
+    def _annotate_user_flags(queryset, user):
+        """Аннотирует рецепты флагами избранного/корзины для пользователя."""
+        if user and user.is_authenticated:
+            favorite_subquery = Favorite.objects.filter(
+                user=user, recipe=OuterRef('pk')
+            )
+            cart_subquery = ShoppingCart.objects.filter(
+                user=user, recipe=OuterRef('pk')
+            )
+            return queryset.annotate(
+                is_favorited=Exists(favorite_subquery),
+                is_in_shopping_cart=Exists(cart_subquery),
+            )
+        return queryset.annotate(
+            is_favorited=Value(False, output_field=BooleanField()),
+            is_in_shopping_cart=Value(False, output_field=BooleanField()),
+        )
+
+    def get_queryset(self):
+        return self._annotate_user_flags(
+            super().get_queryset(), self.request.user
+        )
 
     def _recipe_link(
         self,
