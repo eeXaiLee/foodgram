@@ -363,15 +363,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def _apply_tags_ingredients(
         self,
         instance: Recipe,
-        tags: list[Tag] | None,
-        ingredients: list[dict[str, Any]] | None,
+        tags: list[Tag],
+        ingredients: list[dict[str, Any]],
     ) -> None:
-        if tags is not None:
-            instance.tags.set(tags)
+        """Применяет теги и ингредиенты к рецепту."""
+        instance.tags.set(tags)
 
-        if ingredients is not None:
-            RecipeIngredient.objects.filter(recipe=instance).delete()
-            self._set_ingredients(instance, ingredients)
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        self._set_ingredients(instance, ingredients)
 
     @transaction.atomic
     def create(self, validated_data: dict[str, Any]) -> Recipe:
@@ -393,8 +392,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(
         self, instance: Recipe, validated_data: dict[str, Any]
     ) -> Recipe:
-        ingredients = validated_data.pop('ingredients', None)
-        tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
         image_b64 = validated_data.pop('image', None)
 
         instance = super().update(instance, validated_data)
