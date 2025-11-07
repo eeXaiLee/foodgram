@@ -354,6 +354,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         RecipeIngredient.objects.bulk_create(links)
 
+    @staticmethod
+    def _assign_image(instance: Recipe, image_b64: str) -> None:
+        """Декодирует base64 и сохраняет изображение в instance.image."""
+        content = _decode_base64(image_b64)
+        instance.image.save(content.name, content, save=False)
+
+    def _apply_tags_ingredients(
+        self,
+        instance: Recipe,
+        tags: list[Tag] | None,
+        ingredients: list[dict[str, Any]] | None,
+    ) -> None:
+        if tags is not None:
+            instance.tags.set(tags)
+
+        if ingredients is not None:
+            RecipeIngredient.objects.filter(recipe=instance).delete()
+            self._set_ingredients(instance, ingredients)
+
     @transaction.atomic
     def create(self, validated_data: dict[str, Any]) -> Recipe:
         ingredients = validated_data.pop('ingredients')
@@ -363,12 +382,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             author=self.context['request'].user,
             **validated_data,
         )
-        content = _decode_base64(image_b64)
-        recipe.image.save(content.name, content, save=False)
+        self._assign_image(recipe, image_b64)
         recipe.save()
 
-        recipe.tags.set(tags)
-        self._set_ingredients(recipe, ingredients)
+        self._apply_tags_ingredients(recipe, tags, ingredients)
 
         return recipe
 
@@ -380,21 +397,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags', None)
         image_b64 = validated_data.pop('image', None)
 
-        for attr, val in validated_data.items():
-            setattr(instance, attr, val)
+        instance = super().update(instance, validated_data)
 
         if image_b64 is not None:
-            content = _decode_base64(image_b64)
-            instance.image.save(content.name, content, save=False)
+            self._assign_image(instance, image_b64)
+            instance.save(update_fields=['image'])
 
-        instance.save()
-
-        if tags is not None:
-            instance.tags.set(tags)
-
-        if ingredients is not None:
-            RecipeIngredient.objects.filter(recipe=instance).delete()
-            self._set_ingredients(instance, ingredients)
+        self._apply_tags_ingredients(instance, tags, ingredients)
 
         return instance
 
