@@ -207,7 +207,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientInSerializer(serializers.Serializer):
-    """Игредиент в рецепте при создании/обновлении."""
+    """Ингредиент в рецепте при создании/обновлении."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField(

@@ -81,7 +81,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
     смены пароля, установки аватара и подписки на других пользователей.
     """
 
-    queryset = User.objects.order_by('id')
+    queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = UserSerializer
     serializer_classes = {
