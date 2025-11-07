@@ -1,7 +1,15 @@
 from typing import Optional, Type
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, F, OuterRef, Sum, Value
+from django.db.models import (
+    BooleanField,
+    Count,
+    Exists,
+    F,
+    OuterRef,
+    Sum,
+    Value,
+)
 from django.http import HttpRequest, HttpResponse
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -188,6 +196,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         authors = (
             self.get_queryset()
             .filter(subscribers__user=request.user)
+            .annotate(recipes_count=Count('recipes'))
             .order_by('id')
         )
         page = self.paginate_queryset(authors)

@@ -429,7 +429,7 @@ class SubscriptionUserSerializer(UserSerializer):
     """Пользователь с подписками."""
 
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
@@ -459,9 +459,6 @@ class SubscriptionUserSerializer(UserSerializer):
         return RecipeShortSerializer(
             queryset, many=True, context=self.context
         ).data
-
-    def get_recipes_count(self, obj: Any) -> int:
-        return Recipe.objects.filter(author=obj).count()
 
 
 class SubscribeActionSerializer(serializers.Serializer):
