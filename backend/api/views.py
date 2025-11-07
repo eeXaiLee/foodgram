@@ -197,7 +197,6 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
             self.get_queryset()
             .filter(subscribers__user=request.user)
             .annotate(recipes_count=Count('recipes'))
-            .order_by('id')
         )
         page = self.paginate_queryset(authors)
         serializer = SubscriptionUserSerializer(
@@ -212,7 +211,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     Выдаёт теги списком и по id без пагинации (стабильный порядок).
     """
 
-    queryset = Tag.objects.order_by('id')
+    queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
@@ -227,7 +226,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
-    queryset = Ingredient.objects.order_by('id')
+    queryset = Ingredient.objects.all()
     filterset_class = IngredientFilter
 
 
@@ -242,7 +241,6 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     queryset = (
         Recipe.objects.select_related('author')
         .prefetch_related('tags', 'recipe_ingredients__ingredient')
-        .order_by('-pub_date', 'id')
     )
     permission_classes = (IsAuthorOrReadOnly,)
     serializer_class = RecipeWriteSerializer

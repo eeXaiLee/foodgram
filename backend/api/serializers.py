@@ -449,9 +449,7 @@ class SubscriptionUserSerializer(UserSerializer):
         if isinstance(raw_limit, str) and raw_limit.isdigit():
             limit = int(raw_limit)
 
-        queryset = (
-            Recipe.objects.filter(author=obj).order_by('-pub_date', 'id')
-        )
+        queryset = Recipe.objects.filter(author=obj)
         if limit:
             queryset = queryset[:limit]
 
