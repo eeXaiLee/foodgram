@@ -445,10 +445,9 @@ class SubscriptionUserSerializer(UserSerializer):
         raw_limit = (
             request.query_params.get('recipes_limit') if request else None
         )
-        try:
-            limit = int(raw_limit) if raw_limit else None
-        except (TypeError, ValueError):
-            limit = None
+        limit = None
+        if isinstance(raw_limit, str) and raw_limit.isdigit():
+            limit = int(raw_limit)
 
         queryset = (
             Recipe.objects.filter(author=obj).order_by('-pub_date', 'id')
