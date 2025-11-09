@@ -43,7 +43,6 @@ from .serializers import (
     SubscribeActionSerializer,
     SubscriptionUserSerializer,
     TagSerializer,
-    UserCreateResponseSerializer,
     UserCreateSerializer,
     UserSerializer,
 )
@@ -88,21 +87,6 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         'subscribe': SubscribeActionSerializer,
         'subscriptions': SubscriptionUserSerializer,
     }
-
-    def create(self, request, *args, **kwargs) -> Response:
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        response_serializer = UserCreateResponseSerializer(
-            user, context=self.get_serializer_context()
-        )
-        response_data = response_serializer.data
-        headers = self.get_success_headers(response_data)
-
-        return Response(
-            response_data, status=status.HTTP_201_CREATED, headers=headers
-        )
 
     @action(
         detail=False,
