@@ -122,8 +122,8 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         if request.method == 'DELETE':
             if getattr(current_user, 'avatar', None):
                 current_user.avatar.delete(save=False)
-                current_user.avatar = ''
-                current_user.save(update_fields=['avatar'])
+            current_user.avatar = None
+            current_user.save(update_fields=['avatar'])
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = SetAvatarSerializer(
@@ -163,7 +163,7 @@ class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
         ).delete()
         if deleted == 0:
             return Response(
-                {'errors': 'Вы не подписаны.'},
+                {'errors': ['Вы не подписаны.']},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -278,7 +278,7 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         ).delete()
         if deleted == 0:
             return Response(
-                {'errors': 'Нечего удалять.'},
+                {'errors': ['Нечего удалять.']},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)

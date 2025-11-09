@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from django.db import transaction
+from django.db.models import Prefetch
 from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer,
 )
@@ -82,9 +83,9 @@ class UserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'is_subscribed', 'avatar')
 
-    def get_avatar(self, obj: Any) -> str | None:
+    def get_avatar(self, obj: Any) -> str:
         if not getattr(obj, "avatar", None):
-            return None
+            return ''
         request = self.context.get('request')
         url = obj.avatar.url
         return _absolute_url(request, url)
@@ -258,7 +259,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'cooking_time',
             'tags',
             'ingredients',
-            'pub_date',
             'is_favorited',
             'is_in_shopping_cart',
         )
@@ -271,7 +271,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'cooking_time',
             'tags',
             'ingredients',
-            'pub_date',
             'is_favorited',
             'is_in_shopping_cart',
         )
@@ -303,6 +302,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs: dict) -> dict:
+        request = self.context.get('request')
+
+        if request and request.method.upper() in ['PUT', 'PATCH']:
+            if 'ingredients' not in self.initial_data:
+                raise serializers.ValidationError(
+                    {'ingredients': ['Это поле обязательно.']}
+                )
+            if 'tags' not in self.initial_data:
+                raise serializers.ValidationError(
+                    {'tags': ['Это поле обязательно.']}
+                )
+
         cooking_time = attrs.get('cooking_time')
         if cooking_time is not None:
             if cooking_time < MIN_COOKING_TIME:
@@ -315,7 +326,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     f'Время готовки не может быть больше {MAX_COOKING_TIME} '
                     'минут.'
                 )
-        return attrs
+        return super().validate(attrs)
 
     def validate_ingredients(self, value: list[dict[str, Any]]):
         if not value:
@@ -338,6 +349,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate_tags(self, value):
         if not value:
             raise serializers.ValidationError('Нужен хотя бы 1 тег.')
+        ids = [tag.id for tag in value]
+        if len(ids) != len(set(ids)):
+            raise serializers.ValidationError('Теги должны быть уникальными.')
         return value
 
     def _set_ingredients(
@@ -407,7 +421,38 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance: Recipe) -> dict[str, Any]:
-        return RecipeReadSerializer(instance, context=self.context).data
+        context = getattr(self, 'context', {})
+
+        recipe_with_relations = (
+            Recipe.objects.select_related('author').prefetch_related(
+                'tags',
+                Prefetch(
+                    'recipe_ingredients',
+                    queryset=RecipeIngredient.objects.select_related(
+                        'ingredient'
+                    )
+                )
+            ).get(id=instance.id)
+        )
+
+        request = context.get('request')
+        if request and request.user.is_authenticated:
+            user = request.user
+            recipe_with_relations.is_favorited = Favorite.objects.filter(
+                user=user, recipe=recipe_with_relations
+            ).exists()
+            recipe_with_relations.is_in_shopping_cart = (
+                ShoppingCart.objects.filter(
+                    user=user, recipe=recipe_with_relations
+                ).exists()
+            )
+        else:
+            recipe_with_relations.is_favorited = False
+            recipe_with_relations.is_in_shopping_cart = False
+
+        return RecipeReadSerializer(
+            recipe_with_relations, context=context
+        ).data
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
