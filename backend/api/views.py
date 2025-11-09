@@ -220,10 +220,6 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     покупок.
     """
 
-    queryset = (
-        Recipe.objects.select_related('author')
-        .prefetch_related('tags', 'recipe_ingredients__ingredient')
-    )
     permission_classes = (IsAuthorOrReadOnly,)
     serializer_class = RecipeWriteSerializer
     serializer_classes = {
@@ -254,9 +250,11 @@ class RecipeViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        return self._annotate_user_flags(
-            super().get_queryset(), self.request.user
+        queryset = (
+            Recipe.objects.select_related('author')
+            .prefetch_related('tags', 'recipe_ingredients__ingredient')
         )
+        return self._annotate_user_flags(queryset, self.request.user)
 
     def _recipe_link(
         self,
