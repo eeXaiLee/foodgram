@@ -2,6 +2,7 @@
 
 Foodgram — платформa, где пользователи публикуют рецепты, добавляют их в избранное и в корзину покупок, подписываются на авторов и получают автоматический **список покупок** по выбранным рецептам. Проект реализован согласно ТЗ и схемe OpenAPI.
 
+> **Сайт проекта:** https://foodgram-evg.duckdns.org  
 > **Документация API (Redoc):** `/api/docs/redoc.html`  
 > **Бэкенд админ-панель:** `/admin/`
 
@@ -187,11 +188,13 @@ docker compose exec backend python manage.py load_ingredients
 
 ---
 
-## Demo admin account (для проверки админ-панели)
+## Сайт проекта и доступы
 
-URL: `/admin/`  
-**Логин:** `admin@example.com`  
-**Пароль:** `admin_pass`
+- **Домен:** https://foodgram-evg.duckdns.org  
+- **IP сервера:** 89.169.183.2  
+- **Админ-панель:** https://foodgram-evg.duckdns.org/admin/  
+- **Email:** admin@example.com  
+- **Пароль:** admin_pass
 
 ---
 
