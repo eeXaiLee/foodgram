@@ -71,8 +71,6 @@ class ListCreateRetrieveViewSet(
 ):
     """Реализация базового вьюсета для list, create и retrieve."""
 
-    pass
-
 
 class UserViewSet(MultiSerializerViewSetMixin, ListCreateRetrieveViewSet):
     """Реализация работы с пользователями.
