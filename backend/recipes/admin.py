@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Prefetch
 
 from .models import (
     Favorite,
@@ -53,6 +54,16 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('favorites_count',)
     ordering = ('-pub_date', 'id',)
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('author').prefetch_related(
+            'tags',
+            Prefetch('recipe_ingredients',
+                     queryset=RecipeIngredient.objects.select_related(
+                         'ingredient'
+                     )),
+        )
+
     def favorites_count(self, obj):
         return Favorite.objects.filter(recipe=obj).count()
 
@@ -69,6 +80,10 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
     raw_id_fields = ('recipe', 'ingredient',)
     ordering = ('recipe_id', 'id',)
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('recipe', 'ingredient')
+
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
@@ -81,6 +96,10 @@ class FavoriteAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('user', 'recipe', 'recipe__author')
+
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
@@ -92,3 +111,7 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     list_select_related = ('user', 'recipe',)
     raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('user', 'recipe', 'recipe__author')

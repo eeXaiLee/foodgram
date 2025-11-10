@@ -59,3 +59,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_select_related = ('user', 'author',)
     raw_id_fields = ('user', 'author',)
     ordering = ('id',)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('user', 'author')
