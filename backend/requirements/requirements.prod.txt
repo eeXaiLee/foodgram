@@ -25,6 +25,10 @@ cryptography==46.0.2
     # via
     #   -c requirements.txt
     #   pyjwt
+dalf==0.5.0
+    # via
+    #   -c requirements.txt
+    #   -r requirements.in
 defusedxml==0.7.1
     # via
     #   -c requirements.txt

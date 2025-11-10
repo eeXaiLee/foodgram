@@ -1,3 +1,4 @@
+from dalf.admin import DALFModelAdmin, DALFRelatedFieldAjax
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -51,11 +52,13 @@ class UserAdmin(BaseUserAdmin):
 
 
 @admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
+class SubscriptionAdmin(DALFModelAdmin):
     list_display = ('id', 'user', 'author')
     list_display_links = ('user', 'author')
-    list_filter = ('user', 'author')
-    search_fields = ('user__email', 'author__email')
+    list_filter = (
+        ('user', DALFRelatedFieldAjax),
+        ('author', DALFRelatedFieldAjax),
+    )
     list_select_related = ('user', 'author',)
     raw_id_fields = ('user', 'author',)
     ordering = ('id',)

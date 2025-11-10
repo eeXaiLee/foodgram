@@ -1,3 +1,4 @@
+from dalf.admin import DALFModelAdmin, DALFRelatedFieldAjax
 from django.contrib import admin
 from django.db.models import Prefetch
 
@@ -40,15 +41,18 @@ class RecipeIngredientInline(admin.TabularInline):
 
 
 @admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
+class RecipeAdmin(DALFModelAdmin):
 
     list_display = (
         'id', 'name', 'author', 'cooking_time', 'pub_date', 'favorites_count',
     )
     list_display_links = ('name', 'author')
-    list_filter = ('author', 'tags',)
-    filter_horizontal = ('tags',)
-    search_fields = ('name', 'author__email', 'author__username',)
+    list_filter = (
+        ('author', DALFRelatedFieldAjax),
+        ('tags', DALFRelatedFieldAjax),
+    )
+    autocomplete_fields = ('tags',)
+    search_fields = ('name',)
     inlines = (RecipeIngredientInline,)
     list_select_related = ('author',)
     readonly_fields = ('favorites_count',)
@@ -71,12 +75,14 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 @admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
+class RecipeIngredientAdmin(DALFModelAdmin):
 
     list_display = ('id', 'recipe', 'ingredient', 'amount')
     list_display_links = ('recipe', 'ingredient')
-    list_filter = ('recipe', 'ingredient',)
-    search_fields = ('recipe__name', 'ingredient__name',)
+    list_filter = (
+        ('recipe', DALFRelatedFieldAjax),
+        ('ingredient', DALFRelatedFieldAjax),
+    )
     raw_id_fields = ('recipe', 'ingredient',)
     ordering = ('recipe_id', 'id',)
 
@@ -86,12 +92,14 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 
 
 @admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
+class FavoriteAdmin(DALFModelAdmin):
 
     list_display = ('id', 'user', 'recipe')
     list_display_links = ('user', 'recipe')
-    list_filter = ('user',)
-    search_fields = ('user__email', 'user__username', 'recipe__name',)
+    list_filter = (
+        ('user', DALFRelatedFieldAjax),
+        ('recipe', DALFRelatedFieldAjax),
+    )
     list_select_related = ('user', 'recipe',)
     raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
@@ -102,12 +110,14 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 
 @admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
+class ShoppingCartAdmin(DALFModelAdmin):
 
     list_display = ('id', 'user', 'recipe')
     list_display_links = ('user', 'recipe')
-    list_filter = ('user',)
-    search_fields = ('user__email', 'user__username', 'recipe__name',)
+    list_filter = (
+        ('user', DALFRelatedFieldAjax),
+        ('recipe', DALFRelatedFieldAjax),
+    )
     list_select_related = ('user', 'recipe',)
     raw_id_fields = ('user', 'recipe',)
     ordering = ('id',)
