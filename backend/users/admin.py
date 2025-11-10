@@ -13,7 +13,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = (
         'id', 'email', 'username', 'first_name', 'last_name', 'is_staff'
     )
-    list_display_links = ('id', 'email')
+    list_display_links = ('email', 'username')
     search_fields = ('email', 'username', 'first_name', 'last_name')
     list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups')
     ordering = ('id',)
@@ -53,6 +53,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'author')
+    list_display_links = ('user', 'author')
     list_filter = ('user', 'author')
     search_fields = ('user__email', 'author__email')
     list_select_related = ('user', 'author',)

@@ -14,6 +14,7 @@ from .models import (
 class TagAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'name', 'slug')
+    list_display_links = ('name', 'slug')
     search_fields = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
     ordering = ('id',)
@@ -23,6 +24,7 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'name', 'measurement_unit')
+    list_display_links = ('name',)
     search_fields = ('name',)
     ordering = ('id',)
 
@@ -42,6 +44,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'author', 'cooking_time', 'pub_date', 'favorites_count',
     )
+    list_display_links = ('name', 'author')
     list_filter = ('author', 'tags',)
     filter_horizontal = ('tags',)
     search_fields = ('name', 'author__email', 'author__username',)
@@ -60,6 +63,7 @@ class RecipeAdmin(admin.ModelAdmin):
 class RecipeIngredientAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'recipe', 'ingredient', 'amount')
+    list_display_links = ('recipe', 'ingredient')
     list_filter = ('recipe', 'ingredient',)
     search_fields = ('recipe__name', 'ingredient__name',)
     raw_id_fields = ('recipe', 'ingredient',)
@@ -70,6 +74,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 class FavoriteAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'user', 'recipe')
+    list_display_links = ('user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user__email', 'user__username', 'recipe__name',)
     list_select_related = ('user', 'recipe',)
@@ -81,6 +86,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 class ShoppingCartAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'user', 'recipe')
+    list_display_links = ('user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user__email', 'user__username', 'recipe__name',)
     list_select_related = ('user', 'recipe',)
