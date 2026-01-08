@@ -188,13 +188,11 @@ docker compose exec backend python manage.py load_ingredients
 
 ---
 
-## Сайт проекта и доступы
+## Сайт проекта
 
 - **Домен:** https://foodgram-evg.duckdns.org  
 - **IP сервера:** 89.169.183.2  
 - **Админ-панель:** https://foodgram-evg.duckdns.org/admin/  
-- **Email:** admin@example.com  
-- **Пароль:** admin_pass
 
 ---
 
